@@ -11,11 +11,6 @@ pipeline {
         pollSCM('H/1 * * * *')  // every 1 minute
     }
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
         stage('Build & Test') {
             steps {
                 dir('amazon-api-users') {
@@ -24,7 +19,9 @@ pipeline {
             }
         }
         stage('Docker Build & Push') {
-            when { branch 'master' }
+            when { 
+                expression { env.GIT_BRANCH == 'origin/master' || env.GIT_BRANCH == 'master' }
+            }
             steps {
                 script {
                     dir('amazon-api-users') {
@@ -40,7 +37,9 @@ pipeline {
             }
         }
         stage('Deploy to Minikube') {
-            when { branch 'master' }
+            when { 
+                expression { env.GIT_BRANCH == 'origin/master' || env.GIT_BRANCH == 'master' }
+            }
             steps {
                 sh 'bash k8s/deploy.sh'
             }
