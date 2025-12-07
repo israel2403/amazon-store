@@ -44,7 +44,7 @@ cd amazon-api-users
 
 In another terminal:
 ```bash
-curl http://localhost:8080/users-api
+curl http://localhost:8081/users-api
 # Expected: {"helloWorldMsg":"Hello World!!!"}
 ```
 
@@ -79,13 +79,13 @@ curl http://localhost:8080/users-api
 minikube service amazon-api-users-service -n amazon-api --url
 
 # Or use port-forward
-kubectl port-forward -n amazon-api svc/amazon-api-users-service 8080:8080
+kubectl port-forward -n amazon-api svc/amazon-api-users-service 8081:8081
 
 # Test it
-curl http://localhost:8080/users-api
+curl http://localhost:8081/users-api
 # Expected: {"helloWorldMsg":"Hello World!!!"}
 
-curl http://localhost:8080/users-api/hello
+curl http://localhost:8081/users-api/hello
 # Expected: OK
 ```
 

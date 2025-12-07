@@ -111,16 +111,16 @@ Click "Build Now" in Jenkins. The pipeline will:
 minikube service amazon-api-users-service -n amazon-api --url
 
 # Or use port-forward
-kubectl port-forward -n amazon-api svc/amazon-api-users-service 8080:8080
+kubectl port-forward -n amazon-api svc/amazon-api-users-service 8081:8081
 
 # Test the hello world endpoint
-curl http://localhost:8080/users-api
+curl http://localhost:8081/users-api
 
 # Expected response:
 # {"helloWorldMsg":"Hello World!!!"}
 
 # Test health check endpoint
-curl http://localhost:8080/users-api/hello
+curl http://localhost:8081/users-api/hello
 
 # Expected response:
 # OK
@@ -162,7 +162,7 @@ docker build -t amazon-api-users:local .
 ### Run container locally:
 
 ```bash
-docker run -p 8080:8080 amazon-api-users:local
+docker run -p 8081:8081 amazon-api-users:local
 ```
 
 ## ☸️ Kubernetes Operations

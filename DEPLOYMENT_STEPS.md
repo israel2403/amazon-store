@@ -264,7 +264,7 @@ kubectl logs -n amazon-api -l app=amazon-api-users --tail=50
 
 **Option A: Port Forward**
 ```bash
-kubectl port-forward -n amazon-api svc/amazon-api-users-service 8080:8080
+kubectl port-forward -n amazon-api svc/amazon-api-users-service 8081:8081
 ```
 
 **Option B: Minikube Service**
@@ -276,13 +276,13 @@ minikube service amazon-api-users-service -n amazon-api --url
 
 ```bash
 # Test hello world endpoint
-curl http://localhost:8080/users-api
+curl http://localhost:8081/users-api
 
 # Expected response:
 # {"helloWorldMsg":"Hello World!!!"}
 
 # Test health check endpoint
-curl http://localhost:8080/users-api/hello
+curl http://localhost:8081/users-api/hello
 
 # Expected response:
 # OK
