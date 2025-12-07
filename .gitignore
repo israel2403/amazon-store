@@ -1,0 +1,21 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+**/target/
+**/build/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.iml
+
+# OS metadata
+.DS_Store
+
+# Jenkins
+jenkins_home/
+
+VAULT_MIGRATION.md

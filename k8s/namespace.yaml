@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: amazon-api
+  labels:
+    project: amazon-api
+    owner: isra
