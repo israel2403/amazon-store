@@ -4,25 +4,21 @@ server:
 spring:
   application:
     name: gateway-service
-  autoconfigure:
-    exclude:
-      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
-      - org.springframework.cloud.netflix.eureka.reactive.EurekaReactiveAutoConfiguration
 
   cloud:
     gateway:
       routes:
-        # Route to users-service (blocking is OK, gateway just proxies)
+        # Route to users-service
         - id: users-service
           uri: http://amazon-api-users-service:8081
           predicates:
-            - Path=/users/**
+            - Path=/users-api/**
 
-        # Route to orders-service (reactive)
+        # Route to orders-service
         - id: orders-service
           uri: http://amazonapi-orders-service:8082
           predicates:
-            - Path=/orders/**
+            - Path=/api/orders/**
 
       # (optional) Default filters, etc.
       default-filters:
