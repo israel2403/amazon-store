@@ -22,7 +22,7 @@ spec:
           image: israelhf24/gateway:latest
           imagePullPolicy: Never
           ports:
-            - containerPort: 8080
+            - containerPort: 8083
           resources:
             requests:
               cpu: "100m"
