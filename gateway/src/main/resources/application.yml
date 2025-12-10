@@ -1,0 +1,27 @@
+server:
+  port: 8083   # Gateway port (entrypoint)
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    discovery:
+      enabled: false  # Disable Eureka/Discovery
+    gateway:
+      routes:
+        # Route to users-service (blocking is OK, gateway just proxies)
+        - id: users-service
+          uri: http://amazon-api-users-service:8081
+          predicates:
+            - Path=/users/**
+
+        # Route to orders-service (reactive)
+        - id: orders-service
+          uri: http://amazonapi-orders-service:8082
+          predicates:
+            - Path=/orders/**
+
+      # (optional) Default filters, etc.
+      default-filters:
+        - RemoveResponseHeader=Server
