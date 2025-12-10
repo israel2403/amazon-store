@@ -4,10 +4,12 @@ server:
 spring:
   application:
     name: gateway-service
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.reactive.EurekaReactiveAutoConfiguration
 
   cloud:
-    discovery:
-      enabled: false  # Disable Eureka/Discovery
     gateway:
       routes:
         # Route to users-service (blocking is OK, gateway just proxies)
@@ -25,3 +27,15 @@ spring:
       # (optional) Default filters, etc.
       default-filters:
         - RemoveResponseHeader=Server
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway,health,info
