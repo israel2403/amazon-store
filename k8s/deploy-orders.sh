@@ -11,6 +11,16 @@ echo "Deploying amazonapi-orders service..."
 # Create namespace if it doesn't exist
 kubectl apply -f k8s/namespace.yaml
 
+# Deploy PostgreSQL first
+echo "Deploying PostgreSQL..."
+kubectl apply -f k8s/postgres-pvc.yaml
+kubectl apply -f k8s/postgres-deployment.yaml
+kubectl apply -f k8s/postgres-service.yaml
+
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+kubectl -n "${NAMESPACE}" wait --for=condition=ready pod -l app=postgres --timeout=120s
+
 # Use sed to replace ${DOCKERHUB_USERNAME} with actual value
 sed "s/\${DOCKERHUB_USERNAME}/${DOCKERHUB_USERNAME}/g" k8s/deployment-orders.yaml | kubectl apply -f -
 

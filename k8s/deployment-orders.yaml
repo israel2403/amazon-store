@@ -25,7 +25,7 @@ spec:
             - containerPort: 8082
           env:
             - name: SPRING_R2DBC_URL
-              value: "r2dbc:postgresql://host.minikube.internal:5432/amazon_orders"
+              value: "r2dbc:postgresql://postgres:5432/amazon_orders"
             - name: POSTGRES_USER
               value: "postgres"
             - name: POSTGRES_PASSWORD
