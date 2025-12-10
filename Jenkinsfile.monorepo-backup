@@ -1,0 +1,122 @@
+def loadVaultSecrets() {
+    withVault([
+        vaultSecrets: [[
+            path: 'kv/amazon-api/dockerhub',
+            secretValues: [
+                [envVar: 'DOCKERHUB_USERNAME', vaultKey: 'username'],
+                [envVar: 'DOCKERHUB_TOKEN', vaultKey: 'token']
+            ]
+        ]]
+    ]) {
+        env.DOCKERHUB_USERNAME = "${DOCKERHUB_USERNAME}"
+        env.DOCKERHUB_TOKEN = "${DOCKERHUB_TOKEN}"
+    }
+}
+
+def services() {
+    return [
+        [
+            name      : 'amazon-api-users',
+            directory : 'amazon-api-users',
+            imageName : 'amazon-api-users',
+            buildCmd  : 'mvn clean package',
+            needsChmod: false
+        ],
+        [
+            name      : 'amazonapi-orders',
+            directory : 'amazonapi-orders',
+            imageName : 'amazonapi-orders',
+            buildCmd  : './gradlew clean build',
+            needsChmod: true
+        ]
+    ]
+}
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_TAG     = "${env.BUILD_NUMBER}"
+        K8S_NAMESPACE = "amazon-api"
+    }
+
+    options {
+        timestamps()
+    }
+
+    stages {
+        stage('Load Vault Secrets') {
+            steps {
+                script {
+                    loadVaultSecrets()
+                }
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                script {
+                    def builders = services().collectEntries { svc ->
+                        ["${svc.name}": {
+                            dir(svc.directory) {
+                                if (svc.needsChmod) {
+                                    sh 'chmod +x gradlew'
+                                }
+                                sh svc.buildCmd
+                            }
+                        }]
+                    }
+                    parallel builders
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    services().each { svc ->
+                        dir(svc.directory) {
+                            sh """
+                                echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                                docker build -t ${DOCKERHUB_USERNAME}/${svc.imageName}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${svc.imageName}:latest .
+                                docker push ${DOCKERHUB_USERNAME}/${svc.imageName}:${IMAGE_TAG}
+                                docker push ${DOCKERHUB_USERNAME}/${svc.imageName}:latest
+                                docker logout
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'main'
+                }
+            }
+            steps {
+                sh 'bash k8s/deploy.sh'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

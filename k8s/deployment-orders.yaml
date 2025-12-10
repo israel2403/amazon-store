@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amazonapi-orders-deployment
+  namespace: amazon-api
+  labels:
+    app: amazonapi-orders
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: amazonapi-orders
+  template:
+    metadata:
+      labels:
+        app: amazonapi-orders
+        tier: backend
+    spec:
+      containers:
+        - name: amazonapi-orders
+          image: ${DOCKERHUB_USERNAME}/amazonapi-orders:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_R2DBC_URL
+              value: "r2dbc:postgresql://postgres:5432/amazon_orders"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          livenessProbe:
+            httpGet:
+              path: /api/orders
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/orders
+              port: 8082
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

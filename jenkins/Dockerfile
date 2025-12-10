@@ -28,6 +28,7 @@ RUN jenkins-plugin-cli --plugins \
     workflow-aggregator \
     docker-workflow \
     kubernetes-cli \
-    credentials-binding
+    credentials-binding \
+    hashicorp-vault-plugin
 
 USER jenkins

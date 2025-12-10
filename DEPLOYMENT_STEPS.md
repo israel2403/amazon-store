@@ -2,6 +2,39 @@
 
 Follow these steps **in order** to get your CI/CD pipeline running.
 
+## ✅ System Status Check
+
+Before proceeding with setup, verify your current system status:
+
+```bash
+# Check Docker services
+docker compose ps
+
+# Check Minikube cluster
+minikube status
+
+# Check deployed applications
+kubectl get pods -n amazon-api
+kubectl get svc -n amazon-api
+
+# Test application endpoints
+minikube service amazon-api-users-service -n amazon-api --url
+curl http://$(minikube service amazon-api-users-service -n amazon-api --url)/users-api
+curl http://$(minikube service amazon-api-users-service -n amazon-api --url)/users-api/hello
+```
+
+**Expected Results:**
+- Jenkins container: Running on port 8080
+- Minikube: All components (host, kubelet, apiserver) Running
+- Pods: 3 replicas of amazon-api-users-deployment in Running status
+- Service: amazon-api-users-service exposed on NodePort 30081
+- API Response: `{"helloWorldMsg":"Hello World!!!"}`
+- Health Check: `OK`
+
+**Note:** If Vault container is not running, that's expected - it's defined in docker-compose.yml but may need to be started separately.
+
+---
+
 ## 🚨 IMPORTANT: Before You Start
 
 **Security Check:**
@@ -67,8 +100,8 @@ minikube start
 kubectl cluster-info
 minikube status
 
-# Start Jenkins
-docker-compose up -d
+# Start Jenkins (use 'docker compose' without hyphen for newer Docker versions)
+docker compose up -d
 
 # Wait for Jenkins to start (takes 1-2 minutes)
 echo "Waiting for Jenkins to start..."
@@ -161,7 +194,7 @@ docker exec -it amazon-api-jenkins env | grep DOCKER
 docker exec -it amazon-api-jenkins env | grep GITHUB
 
 # If empty, restart Jenkins
-docker-compose restart jenkins
+docker compose restart jenkins
 ```
 
 ### Step 8: Create Jenkins Pipeline Job
@@ -207,7 +240,7 @@ docker exec -it amazon-api-jenkins docker ps
 sudo chmod 666 /var/run/docker.sock
 
 # Restart Jenkins
-docker-compose restart jenkins
+docker compose restart jenkins
 ```
 
 ### Step 10: Verify Kubernetes Access from Jenkins
@@ -376,8 +409,8 @@ docker exec -it amazon-api-jenkins kubectl get nodes
 minikube status
 
 # Check if ~/.kube is mounted
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ### Issue: Image push to DockerHub fails
@@ -388,6 +421,15 @@ docker exec -it amazon-api-jenkins env | grep DOCKER
 
 # Test Docker login manually
 docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_TOKEN
+```
+
+### Issue: Warning about docker-compose.yml version attribute
+**Solution:**
+```bash
+# The 'version' attribute in docker-compose.yml is now obsolete
+# This is just a warning and won't affect functionality
+# To remove the warning, edit docker-compose.yml and delete the first line:
+# version: "3.8"
 ```
 
 ### Issue: Pod crashes or CrashLoopBackOff

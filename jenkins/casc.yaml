@@ -15,23 +15,19 @@ credentials:
   system:
     domainCredentials:
       - credentials:
-          - string:
-              id: "dockerhub-username-id"
-              secret: ${DOCKERHUB_USERNAME}
+          - vaultTokenCredential:
               scope: GLOBAL
-              description: "DockerHub Username"
-          - string:
-              id: "dockerhub-token-id"
-              secret: ${DOCKERHUB_TOKEN}
-              scope: GLOBAL
-              description: "DockerHub Token"
-          - usernamePassword:
-              id: "github-credentials"
-              username: ${GITHUB_USERNAME}
-              password: ${GITHUB_TOKEN}
-              scope: GLOBAL
-              description: "GitHub Credentials"
+              id: "vault-root-token"
+              description: "Vault root token for dev mode"
+              token: ${VAULT_ROOT_TOKEN}
 
 unclassified:
   location:
     url: http://localhost:8080/
+  hashicorpVault:
+    configuration:
+      vaultUrl: ${VAULT_ADDR}
+      vaultCredentialId: "vault-root-token"
+      engineVersion: 2
+      skipSslVerification: true
+      failIfNotFound: false

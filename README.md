@@ -16,24 +16,37 @@ A simple Spring Boot "Hello World" application demonstrating a complete DevOps C
 
 ```
 .
-├── amazon-api-users/          # Spring Boot application
+├── amazon-api-users/          # Users Spring Boot service (Maven)
 │   ├── src/
 │   │   └── main/
 │   │       └── java/.../
 │   │           ├── AmazonApiUsersApplication.java
 │   │           └── controller/UsersController.java
 │   ├── Dockerfile             # Multi-stage Docker build
-│   └── pom.xml               # Maven dependencies
+│   ├── pom.xml               # Maven dependencies
+│   └── Jenkinsfile           # Users service pipeline
+├── amazonapi-orders/          # Orders Spring Boot service (Gradle)
+│   ├── src/
+│   │   └── main/
+│   │       └── java/.../
+│   │           ├── controller/OrderController.java
+│   │           └── model/Order.java
+│   ├── Dockerfile             # Multi-stage Docker build
+│   ├── build.gradle          # Gradle dependencies
+│   └── Jenkinsfile           # Orders service pipeline
 ├── jenkins/                   # Jenkins configuration
 │   ├── Dockerfile            # Jenkins with Docker, kubectl, Maven
 │   └── casc.yaml            # Jenkins Configuration as Code
 ├── k8s/                      # Kubernetes manifests
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── deploy.sh            # Deployment script
-├── docker-compose.yml        # Jenkins container setup
-├── Jenkinsfile              # CI/CD pipeline definition
+│   ├── namespace.yaml        # Shared namespace
+│   ├── deployment.yaml       # Users deployment
+│   ├── service.yaml          # Users service
+│   ├── deployment-orders.yaml # Orders deployment
+│   ├── service-orders.yaml    # Orders service
+│   ├── deploy-users.sh       # Users deploy script
+│   └── deploy-orders.sh      # Orders deploy script
+├── docker-compose.yml        # Jenkins + Vault setup
+├── Jenkinsfile.monorepo-backup # Old monorepo pipeline (backup)
 └── .env.example             # Environment variables template
 ```
 
@@ -79,8 +92,15 @@ minikube start
 kubectl cluster-info
 ```
 
-### 4. Create Jenkins Pipeline Job
+### 4. Create Jenkins Pipeline Jobs
 
+**This project uses separate pipelines for each microservice.**
+
+For detailed instructions, see: **[SEPARATE_PIPELINES_SETUP.md](SEPARATE_PIPELINES_SETUP.md)**
+
+**Quick Setup:**
+
+**Job 1: Users Service**
 1. Go to Jenkins → New Item
 2. Enter name: `amazon-api-users-pipeline`
 3. Select "Pipeline" and click OK
@@ -89,22 +109,46 @@ kubectl cluster-info
    - SCM: Git
    - Repository URL: `https://github.com/YOUR_USERNAME/amazon-store`
    - Branch: `*/master`
-   - Script Path: `Jenkinsfile`
-5. Check "GitHub hook trigger for GITScm polling" (optional)
-6. Save
+   - Script Path: `amazon-api-users/Jenkinsfile` ⚠️
+5. Save
 
-### 5. Run the Pipeline
+**Job 2: Orders Service**
+1. Go to Jenkins → New Item
+2. Enter name: `amazonapi-orders-pipeline`
+3. Select "Pipeline" and click OK
+4. Under "Pipeline" section:
+   - Definition: "Pipeline script from SCM"
+   - SCM: Git
+   - Repository URL: `https://github.com/YOUR_USERNAME/amazon-store`
+   - Branch: `*/master`
+   - Script Path: `amazonapi-orders/Jenkinsfile` ⚠️
+5. Save
 
-Click "Build Now" in Jenkins. The pipeline will:
-1. ✅ Checkout code from Git
-2. ✅ Build and test with Maven
-3. ✅ Build Docker image
-4. ✅ Push to Docker Hub
-5. ✅ Deploy to Minikube
+### 5. Run the Pipelines
 
-## 🧪 Testing the Application
+Run each pipeline independently:
 
-### Test the API endpoint:
+**Users Service Pipeline:**
+1. Click on `amazon-api-users-pipeline`
+2. Click "Build Now"
+3. Pipeline stages:
+   - ✅ Load Vault Secrets
+   - ✅ Build & Test (Maven)
+   - ✅ Docker Build & Push
+   - ✅ Deploy to Minikube
+
+**Orders Service Pipeline:**
+1. Click on `amazonapi-orders-pipeline`
+2. Click "Build Now"
+3. Pipeline stages:
+   - ✅ Load Vault Secrets
+   - ✅ Build & Test (Gradle)
+   - ✅ Docker Build & Push
+   - ✅ Deploy to Minikube
+
+## 🧪 Testing the Applications
+
+### Test Users Service:
 
 ```bash
 # Get Minikube service URL
@@ -124,6 +168,27 @@ curl http://localhost:8081/users-api/hello
 
 # Expected response:
 # OK
+```
+
+### Test Orders Service:
+
+```bash
+# Get Minikube service URL
+minikube service amazonapi-orders-service -n amazon-api --url
+
+# Or use port-forward
+kubectl port-forward -n amazon-api svc/amazonapi-orders-service 8082:8082
+
+# Test the orders endpoint
+curl http://localhost:8082/api/orders
+
+# Expected response:
+# [] (empty array)
+
+# Create an order (if database is configured)
+curl -X POST http://localhost:8082/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"user123","productId":"prod456","quantity":2}'
 ```
 
 ## 🔧 Local Development
@@ -212,10 +277,22 @@ kubectl delete namespace amazon-api
 
 ## 📝 API Endpoints
 
+### Users Service (Port 8081)
+
 | Endpoint | Method | Description | Response |
 |----------|--------|-------------|----------|
 | `/users-api` | GET | Hello World message | `{"helloWorldMsg":"Hello World!!!"}` |
 | `/users-api/hello` | GET | Health check | `OK` |
+
+### Orders Service (Port 8082)
+
+| Endpoint | Method | Description | Response |
+|----------|--------|-------------|----------|
+| `/api/orders` | GET | Get all orders | `[{...}]` |
+| `/api/orders/{id}` | GET | Get order by ID | `{...}` |
+| `/api/orders` | POST | Create new order | `{...}` |
+| `/api/orders/{id}` | PUT | Update order | `{...}` |
+| `/api/orders/{id}` | DELETE | Delete order | `204 No Content` |
 
 ## 🔐 Security Notes
 
