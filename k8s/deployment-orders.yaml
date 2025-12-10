@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: amazonapi-orders
-          image: ${DOCKERHUB_USERNAME}/amazonapi-orders:latest
+          image: israelhf24/amazonapi-orders:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8082
@@ -30,18 +30,6 @@ spec:
               value: "postgres"
             - name: POSTGRES_PASSWORD
               value: "SecurePostgres123!"
-          livenessProbe:
-            httpGet:
-              path: /api/orders
-              port: 8082
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /api/orders
-              port: 8082
-            initialDelaySeconds: 20
-            periodSeconds: 5
           resources:
             requests:
               cpu: "100m"
