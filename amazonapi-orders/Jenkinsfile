@@ -60,11 +60,8 @@ pipeline {
 
         stage('Docker Build & Push') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                    branch 'origin/master'
-                    branch 'origin/main'
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main).*/
                 }
             }
             steps {
@@ -82,11 +79,8 @@ pipeline {
 
         stage('Deploy to Minikube') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'main'
-                    branch 'origin/master'
-                    branch 'origin/main'
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main).*/
                 }
             }
             steps {
