@@ -31,9 +31,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - vault
-    ports:
-      - "8080:8080"
-      - "50000:50000"
+    network_mode: "host"  # Allow Jenkins to access Minikube on host
     volumes:
       - ./jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock     # Host Docker (local learning)
@@ -41,11 +39,9 @@ services:
       - ./jenkins/casc.yaml:/var/jenkins_home/casc.yaml
     environment:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
-      - VAULT_ADDR=http://vault:8200
+      - VAULT_ADDR=http://localhost:8200  # Use localhost since we're on host network
     env_file:
       - .env
-    networks:
-      - ci-cd-network
     restart: unless-stopped
 
 networks:
