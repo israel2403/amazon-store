@@ -31,4 +31,8 @@ RUN jenkins-plugin-cli --plugins \
     credentials-binding \
     hashicorp-vault-plugin
 
+# Add jenkins user to docker group (use host's docker group ID)
+RUN groupadd -g 984 docker || true && \
+    usermod -aG docker jenkins
+
 USER jenkins
