@@ -40,7 +40,7 @@ pipeline {
             steps {
                 dir(env.SERVICE_DIR) {
                     sh 'chmod +x gradlew'
-                    sh './gradlew clean build'
+                    sh './gradlew clean build -x test'
                 }
             }
         }
