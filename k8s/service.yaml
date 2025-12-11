@@ -6,11 +6,10 @@ metadata:
   labels:
     app: amazon-api-users
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: amazon-api-users
   ports:
     - name: http
       port: 8081
       targetPort: 8081
-      nodePort: 30081   # optional; if omitted, Kubernetes assigns one

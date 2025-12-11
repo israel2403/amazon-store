@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazon-api-ingress
+  namespace: amazon-api
+  annotations:
+    konghq.com/strip-path: "false"
+    kubernetes.io/ingress.class: kong
+spec:
+  ingressClassName: kong
+  rules:
+    - http:
+        paths:
+          # Route for users API
+          - path: /users-api
+            pathType: Prefix
+            backend:
+              service:
+                name: amazon-api-users-service
+                port:
+                  number: 8081
+          # Route for orders API
+          - path: /api/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: amazonapi-orders-service
+                port:
+                  number: 8082
