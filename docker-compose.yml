@@ -36,6 +36,7 @@ services:
       - ./jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock:rw  # Host Docker with read-write
       - ~/.kube:/var/jenkins_home/.kube               # So kubectl uses your config
+      - ~/.minikube:/home/isra/.minikube:ro           # Mount minikube certs
       - ./jenkins/casc.yaml:/var/jenkins_home/casc.yaml
     environment:
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml
