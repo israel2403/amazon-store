@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: amazon-api
+  labels:
+    app: vault
+spec:
+  type: NodePort
+  ports:
+  - port: 8200
+    targetPort: 8200
+    nodePort: 30200
+    protocol: TCP
+    name: vault
+  selector:
+    app: vault

@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: amazon-api
+  labels:
+    app: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+      - name: vault
+        image: hashicorp/vault:latest
+        ports:
+        - containerPort: 8200
+          name: vault
+        env:
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          valueFrom:
+            secretKeyRef:
+              name: vault-secrets
+              key: root-token
+        - name: VAULT_DEV_LISTEN_ADDRESS
+          value: "0.0.0.0:8200"
+        - name: VAULT_ADDR
+          value: "http://127.0.0.1:8200"
+        - name: GITHUB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: GITHUB_USERNAME
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: GITHUB_TOKEN
+        - name: DOCKERHUB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: DOCKERHUB_USERNAME
+        - name: DOCKERHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: DOCKERHUB_TOKEN
+        - name: JENKINS_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: JENKINS_ADMIN_USER
+        - name: JENKINS_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: JENKINS_ADMIN_PASSWORD
+        - name: K8S_NAMESPACE
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: K8S_NAMESPACE
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: vault-env-secrets
+              key: POSTGRES_PASSWORD
+        command:
+        - vault
+        - server
+        - -dev
+        - -dev-root-token-id=$(VAULT_DEV_ROOT_TOKEN_ID)
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        volumeMounts:
+        - name: vault-data
+          mountPath: /vault/data
+        - name: vault-logs
+          mountPath: /vault/logs
+        - name: vault-init-script
+          mountPath: /vault/scripts
+        livenessProbe:
+          exec:
+            command:
+            - vault
+            - status
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - vault
+            - status
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+      volumes:
+      - name: vault-data
+        persistentVolumeClaim:
+          claimName: vault-data
+      - name: vault-logs
+        persistentVolumeClaim:
+          claimName: vault-logs
+      - name: vault-init-script
+        configMap:
+          name: vault-init-script
+          defaultMode: 0755
