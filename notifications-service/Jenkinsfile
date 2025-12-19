@@ -1,0 +1,110 @@
+def loadVaultSecrets() {
+    withVault([
+        vaultSecrets: [[
+            path: 'kv/amazon-api/dockerhub',
+            secretValues: [
+                [envVar: 'DOCKERHUB_USERNAME', vaultKey: 'username'],
+                [envVar: 'DOCKERHUB_TOKEN', vaultKey: 'token']
+            ]
+        ]]
+    ]) {
+        // Persist secrets for later stages
+        env.DOCKERHUB_USERNAME = "${DOCKERHUB_USERNAME}"
+        env.DOCKERHUB_TOKEN = "${DOCKERHUB_TOKEN}"
+    }
+}
+
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_DIR   = 'notifications-service'
+        IMAGE_NAME    = 'notifications-service'
+        IMAGE_TAG     = "${env.BUILD_NUMBER}"
+        K8S_NAMESPACE = "${env.K8S_NAMESPACE ?: 'amazon-api'}"
+    }
+
+    options {
+        timestamps()
+    }
+
+    stages {
+        stage('Load Vault Secrets') {
+            steps {
+                script {
+                    loadVaultSecrets()
+                }
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                dir(env.SERVICE_DIR) {
+                    sh 'npm ci'
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main|develop|dev).*/
+                }
+            }
+            steps {
+                dir(env.SERVICE_DIR) {
+                    sh """
+                        echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker logout
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Development') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(develop|dev).*/
+                }
+            }
+            steps {
+                script {
+                    echo 'Deploying to Development environment...'
+                    sh '''
+                        kubectl apply -k k8s/overlays/dev/
+                        kubectl rollout restart -n amazon-api deployment/notifications-service
+                        kubectl rollout status -n amazon-api deployment/notifications-service --timeout=5m
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main).*/
+                }
+            }
+            steps {
+                script {
+                    echo 'Deploying to Production environment...'
+                    sh '''
+                        kubectl apply -k k8s/overlays/prod/
+                        kubectl rollout restart -n amazon-api deployment/notifications-service
+                        kubectl rollout status -n amazon-api deployment/notifications-service --timeout=5m
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
