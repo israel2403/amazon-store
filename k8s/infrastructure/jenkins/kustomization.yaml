@@ -5,6 +5,7 @@ namespace: amazon-api
 
 resources:
   - jenkins-configmap.yaml
+  - jenkins-secrets.yaml
   - jenkins-pvc.yaml
   - jenkins-rbac.yaml
   - jenkins-deployment.yaml
