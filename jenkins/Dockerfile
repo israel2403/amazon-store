@@ -24,12 +24,14 @@ RUN apt-get update && \
 # Install Jenkins plugins
 RUN jenkins-plugin-cli --plugins \
     configuration-as-code \
+    job-dsl \
     git \
     workflow-aggregator \
     docker-workflow \
     kubernetes-cli \
     credentials-binding \
-    hashicorp-vault-plugin
+    hashicorp-vault-plugin \
+    github-branch-source
 
 # Add jenkins user to docker group (use host's docker group ID)
 RUN groupadd -g 984 docker || true && \
