@@ -13,7 +13,7 @@ fi
 
 # Create namespace
 echo "📦 Creating amazon-api namespace..."
-kubectl apply -f namespace.yaml
+kubectl apply -f ../base/namespace/
 
 # Create secrets for Vault
 echo "🔑 Creating Vault secrets..."
@@ -40,16 +40,16 @@ kubectl create secret generic vault-env-secrets \
 
 # Deploy Vault components
 echo "📝 Creating ConfigMap..."
-kubectl apply -f vault-configmap.yaml
+kubectl apply -f ../infrastructure/vault/vault-configmap.yaml
 
 echo "💾 Creating PersistentVolumeClaims..."
-kubectl apply -f vault-pvc.yaml
+kubectl apply -f ../infrastructure/vault/vault-pvc.yaml
 
 echo "🚀 Creating Vault Deployment..."
-kubectl apply -f vault-deployment.yaml
+kubectl apply -f ../infrastructure/vault/vault-deployment.yaml
 
 echo "🌐 Creating Vault Service..."
-kubectl apply -f vault-service.yaml
+kubectl apply -f ../infrastructure/vault/vault-service.yaml
 
 # Wait for Vault to be ready
 echo "⏳ Waiting for Vault to be ready..."

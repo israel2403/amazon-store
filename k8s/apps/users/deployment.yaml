@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: amazon-api-users
-          image: ${DOCKERHUB_USERNAME}/amazon-api-users:latest
+          image: israelhf24/amazon-api-users:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8081

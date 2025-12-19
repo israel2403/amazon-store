@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics-init
+  namespace: amazon-api
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: kafka-topics-creator
+        image: confluentinc/cp-kafka:7.5.0
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for Kafka to be ready..."
+          sleep 30
+          
+          KAFKA_BROKERS="kafka-0.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-1.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-2.kafka-headless.amazon-api.svc.cluster.local:9092"
+          
+          echo "Creating topics..."
+          
+          # Order topics
+          kafka-topics --bootstrap-server $KAFKA_BROKERS --create --if-not-exists \
+            --topic order.created --partitions 3 --replication-factor 3 \
+            --config retention.ms=604800000 --config min.insync.replicas=2
+          
+          kafka-topics --bootstrap-server $KAFKA_BROKERS --create --if-not-exists \
+            --topic order.updated --partitions 3 --replication-factor 3 \
+            --config retention.ms=604800000 --config min.insync.replicas=2
+          
+          # User topics
+          kafka-topics --bootstrap-server $KAFKA_BROKERS --create --if-not-exists \
+            --topic user.created --partitions 3 --replication-factor 3 \
+            --config retention.ms=604800000 --config min.insync.replicas=2
+          
+          # Notification topics
+          kafka-topics --bootstrap-server $KAFKA_BROKERS --create --if-not-exists \
+            --topic notification.email --partitions 3 --replication-factor 3 \
+            --config retention.ms=259200000 --config min.insync.replicas=2
+          
+          echo "Topics created successfully!"
+          kafka-topics --bootstrap-server $KAFKA_BROKERS --list

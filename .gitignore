@@ -6,6 +6,7 @@
 # Build outputs
 **/target/
 **/build/
+**/node_modules/
 
 # IDE/editor settings
 .vscode/

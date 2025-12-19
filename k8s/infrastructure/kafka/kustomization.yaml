@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: amazon-api
+
+resources:
+  - kafka-kraft-statefulset.yaml
+  - kafka-topics-configmap.yaml
+  - kafka-topics-job.yaml
+
+commonLabels:
+  component: kafka-cluster

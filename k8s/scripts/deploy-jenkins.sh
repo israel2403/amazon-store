@@ -17,7 +17,7 @@ eval $(minikube docker-env)
 docker build -t jenkins-custom:latest ../jenkins/
 
 echo "📦 Ensuring amazon-api namespace exists..."
-kubectl apply -f namespace.yaml
+kubectl apply -f ../base/namespace/
 
 # Create secrets for Jenkins
 echo "🔑 Creating Jenkins secrets..."
@@ -29,19 +29,19 @@ kubectl create secret generic jenkins-secrets \
 
 # Deploy Jenkins components
 echo "📝 Creating ConfigMap..."
-kubectl apply -f jenkins-configmap.yaml
+kubectl apply -f ../infrastructure/jenkins/jenkins-configmap.yaml
 
 echo "👤 Creating ServiceAccount and RBAC..."
-kubectl apply -f jenkins-rbac.yaml
+kubectl apply -f ../infrastructure/jenkins/jenkins-rbac.yaml
 
 echo "💾 Creating PersistentVolumeClaim..."
-kubectl apply -f jenkins-pvc.yaml
+kubectl apply -f ../infrastructure/jenkins/jenkins-pvc.yaml
 
 echo "🚀 Creating Jenkins Deployment..."
-kubectl apply -f jenkins-deployment.yaml
+kubectl apply -f ../infrastructure/jenkins/jenkins-deployment.yaml
 
 echo "🌐 Creating Jenkins Service..."
-kubectl apply -f jenkins-service.yaml
+kubectl apply -f ../infrastructure/jenkins/jenkins-service.yaml
 
 # Wait for Jenkins to be ready
 echo "⏳ Waiting for Jenkins to be ready (this may take a few minutes)..."

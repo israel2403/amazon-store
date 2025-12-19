@@ -1,0 +1,203 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: amazon-api
+  labels:
+    app: kafka-kraft
+spec:
+  ports:
+  - port: 9092
+    name: client
+  - port: 9093
+    name: controller
+  clusterIP: None
+  selector:
+    app: kafka-kraft
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: amazon-api
+  labels:
+    app: kafka-kraft
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9092
+    targetPort: 9092
+    name: client
+  selector:
+    app: kafka-kraft
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: amazon-api
+  labels:
+    app: kafka-kraft
+spec:
+  serviceName: kafka-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kafka-kraft
+  template:
+    metadata:
+      labels:
+        app: kafka-kraft
+    spec:
+      containers:
+      - name: kafka
+        image: confluentinc/cp-kafka:7.5.0
+        ports:
+        - containerPort: 9092
+          name: client
+        - containerPort: 9093
+          name: controller
+        env:
+        - name: KAFKA_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_ID
+          value: "MkU3OEVBNTcwNTJENDM2Qk"
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "0@kafka-0.kafka-headless.amazon-api.svc.cluster.local:9093,1@kafka-1.kafka-headless.amazon-api.svc.cluster.local:9093,2@kafka-2.kafka-headless.amazon-api.svc.cluster.local:9093"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://$(HOSTNAME).kafka-headless.amazon-api.svc.cluster.local:9092"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "PLAINTEXT"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "2"
+        - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_MIN_INSYNC_REPLICAS
+          value: "2"
+        - name: KAFKA_NUM_PARTITIONS
+          value: "3"
+        - name: KAFKA_LOG_RETENTION_HOURS
+          value: "168"
+        - name: KAFKA_LOG_SEGMENT_BYTES
+          value: "1073741824"
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
+        - name: KAFKA_DELETE_TOPIC_ENABLE
+          value: "true"
+        - name: KAFKA_JMX_PORT
+          value: "9999"
+        - name: KAFKA_JMX_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        command:
+        - bash
+        - -c
+        - |
+          # Extract node ID from hostname (kafka-0 -> 0)
+          export KAFKA_NODE_ID=${HOSTNAME##*-}
+          
+          # Format log directories
+          export KAFKA_LOG_DIRS=/var/lib/kafka/data
+          
+          # Create kraft.properties with node.id
+          cat > /tmp/kraft-runtime.properties << EOF
+          node.id=${KAFKA_NODE_ID}
+          $(cat /etc/kafka/kraft.properties)
+          EOF
+          
+          # Generate cluster metadata if needed
+          if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+            echo "Formatting storage directory for node ${KAFKA_NODE_ID}..."
+            kafka-storage format -t $CLUSTER_ID -c /tmp/kraft-runtime.properties
+          fi
+          
+          # Start Kafka
+          exec /etc/confluent/docker/run
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /var/lib/kafka/data
+        - name: kraft-config
+          mountPath: /etc/kafka/kraft.properties
+          subPath: kraft.properties
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+      volumes:
+      - name: kraft-config
+        configMap:
+          name: kafka-kraft-config
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-kraft-config
+  namespace: amazon-api
+data:
+  kraft.properties: |
+    process.roles=broker,controller
+    controller.quorum.voters=0@kafka-0.kafka-headless.amazon-api.svc.cluster.local:9093,1@kafka-1.kafka-headless.amazon-api.svc.cluster.local:9093,2@kafka-2.kafka-headless.amazon-api.svc.cluster.local:9093
+    listeners=PLAINTEXT://:9092,CONTROLLER://:9093
+    inter.broker.listener.name=PLAINTEXT
+    controller.listener.names=CONTROLLER
+    listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+    num.network.threads=3
+    num.io.threads=8
+    socket.send.buffer.bytes=102400
+    socket.receive.buffer.bytes=102400
+    socket.request.max.bytes=104857600
+    log.dirs=/var/lib/kafka/data
+    num.partitions=3
+    num.recovery.threads.per.data.dir=1
+    offsets.topic.replication.factor=3
+    transaction.state.log.replication.factor=3
+    transaction.state.log.min.isr=2
+    log.retention.hours=168
+    log.segment.bytes=1073741824
+    log.retention.check.interval.ms=300000
+    default.replication.factor=3
+    min.insync.replicas=2

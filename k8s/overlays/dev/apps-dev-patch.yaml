@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amazon-api-users-deployment
+  namespace: amazon-api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: amazon-api-users
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amazonapi-orders-deployment
+  namespace: amazon-api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: amazonapi-orders
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-service
+  namespace: amazon-api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: notifications-service
+        env:
+        - name: KAFKA_BROKERS
+          value: "kafka-0.kafka-headless.amazon-api.svc.cluster.local:9092"
+        - name: NODE_ENV
+          value: "development"
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

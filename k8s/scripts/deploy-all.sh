@@ -17,7 +17,7 @@ MINIKUBE_IP=$(minikube ip)
 
 # Step 1: Create namespace
 echo "📦 Step 1: Creating amazon-api namespace..."
-kubectl apply -f namespace.yaml
+kubectl apply -f ../base/namespace/
 echo "✅ Namespace created"
 echo ""
 
@@ -35,9 +35,7 @@ echo ""
 
 # Step 4: Deploy PostgreSQL
 echo "🐘 Step 4: Deploying PostgreSQL..."
-kubectl apply -f postgres-pvc.yaml
-kubectl apply -f postgres-deployment.yaml
-kubectl apply -f postgres-service.yaml
+kubectl apply -f ../base/postgres/
 echo "⏳ Waiting for PostgreSQL to be ready..."
 kubectl wait --for=condition=ready pod -l app=postgres -n amazon-api --timeout=120s
 echo "✅ PostgreSQL deployed"
@@ -46,8 +44,8 @@ echo ""
 # Step 5: Deploy Users Service
 echo "👤 Step 5: Deploying Users Service..."
 # Replace placeholder with actual docker username
-sed "s/\${DOCKERHUB_USERNAME}/${DOCKERHUB_USERNAME}/g" deployment.yaml | kubectl apply -f -
-kubectl apply -f service.yaml
+sed "s/\${DOCKERHUB_USERNAME}/${DOCKERHUB_USERNAME}/g" ../apps/users/deployment.yaml | kubectl apply -f -
+kubectl apply -f ../apps/users/service.yaml
 echo "⏳ Waiting for Users Service to be ready..."
 kubectl wait --for=condition=ready pod -l app=amazon-api-users -n amazon-api --timeout=180s || echo "⚠️  Users service taking longer than expected..."
 echo "✅ Users Service deployed"
@@ -55,8 +53,7 @@ echo ""
 
 # Step 6: Deploy Orders Service
 echo "📦 Step 6: Deploying Orders Service..."
-kubectl apply -f deployment-orders.yaml
-kubectl apply -f service-orders.yaml
+kubectl apply -f ../apps/orders/
 echo "⏳ Waiting for Orders Service to be ready..."
 kubectl wait --for=condition=ready pod -l app=amazonapi-orders -n amazon-api --timeout=180s || echo "⚠️  Orders service taking longer than expected..."
 echo "✅ Orders Service deployed"
