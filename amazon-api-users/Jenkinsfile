@@ -64,14 +64,39 @@ pipeline {
             }
         }
 
-        stage('Deploy to Minikube') {
+        stage('Deploy to Development') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(develop|dev).*/
+                }
+            }
+            steps {
+                script {
+                    echo 'Deploying to Development environment...'
+                    sh '''
+                        kubectl apply -k k8s/overlays/dev/
+                        kubectl rollout restart -n amazon-api deployment/amazon-api-users-deployment
+                        kubectl rollout status -n amazon-api deployment/amazon-api-users-deployment --timeout=5m
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
             when {
                 expression {
                     return env.GIT_BRANCH ==~ /.*(master|main).*/
                 }
             }
             steps {
-                sh 'bash k8s/deploy-users.sh'
+                script {
+                    echo 'Deploying to Production environment...'
+                    sh '''
+                        kubectl apply -k k8s/overlays/prod/
+                        kubectl rollout restart -n amazon-api deployment/amazon-api-users-deployment
+                        kubectl rollout status -n amazon-api deployment/amazon-api-users-deployment --timeout=5m
+                    '''
+                }
             }
         }
     }

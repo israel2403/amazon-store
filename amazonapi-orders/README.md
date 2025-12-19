@@ -38,11 +38,14 @@ docker compose logs postgres-orders
 # Build
 ./gradlew clean build
 
-# Run
-./gradlew bootRun
+# Run (set profile as needed)
+# Examples:
+#   SPRING_PROFILES_ACTIVE=development ./gradlew bootRun
+#   ./gradlew bootRun -Dspring.profiles.active=local
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 
 # Or run the JAR directly
-java -jar build/libs/amazonapi-orders-*.jar
+SPRING_PROFILES_ACTIVE=local java -jar build/libs/amazonapi-orders-*.jar
 ```
 
 The application will start on **port 8082**.
@@ -87,13 +90,18 @@ curl -X DELETE http://localhost:8082/api/orders/{id}
 
 ### Local Development
 
-The application uses these default credentials (defined in `application.properties`):
+The application uses these defaults (in `src/main/resources/application.yml`, shared by all profiles):
 
 ```properties
 spring.r2dbc.url=r2dbc:postgresql://localhost:5432/amazon_orders
 spring.r2dbc.username=postgres
 spring.r2dbc.password=postgres
 ```
+
+Use `application-{profile}.yml` for overrides:
+- `application-development.yml` – dev defaults (Kubernetes service URL, dev password)
+- `application-production.yml` – production tuning, secrets expected from env/secret mounts
+- `application-local.yml` – local overrides (localhost DB)
 
 ### Using Vault (Production)
 

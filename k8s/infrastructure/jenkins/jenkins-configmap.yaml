@@ -38,3 +38,52 @@ data:
           engineVersion: 2
           skipSslVerification: true
           failIfNotFound: false
+
+    jobs:
+      - script: >
+          multibranchPipelineJob('amazon-api-users') {
+            displayName('Amazon API Users Service')
+            description('Pipeline for building and deploying the Users microservice')
+            branchSources {
+              git {
+                id('amazon-api-users-repo')
+                remote('https://github.com/israel2403/amazon-store.git')
+                includes('master main develop feature/*')
+              }
+            }
+            orphanedItemStrategy {
+              discardOldItems {
+                numToKeep(10)
+              }
+            }
+            configure {
+              it / factory(class: 'org.jenkinsci.plugins.workflow.multibranch.WorkflowBranchProjectFactory') {
+                owner(class: 'org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject', plugin: 'workflow-multibranch')
+                scriptPath('amazon-api-users/Jenkinsfile')
+              }
+            }
+          }
+
+      - script: >
+          multibranchPipelineJob('amazonapi-orders') {
+            displayName('Amazon API Orders Service')
+            description('Pipeline for building and deploying the Orders microservice')
+            branchSources {
+              git {
+                id('amazonapi-orders-repo')
+                remote('https://github.com/israel2403/amazon-store.git')
+                includes('master main develop feature/*')
+              }
+            }
+            orphanedItemStrategy {
+              discardOldItems {
+                numToKeep(10)
+              }
+            }
+            configure {
+              it / factory(class: 'org.jenkinsci.plugins.workflow.multibranch.WorkflowBranchProjectFactory') {
+                owner(class: 'org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject', plugin: 'workflow-multibranch')
+                scriptPath('amazonapi-orders/Jenkinsfile')
+              }
+            }
+          }
