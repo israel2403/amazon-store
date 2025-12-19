@@ -24,12 +24,36 @@ spec:
           ports:
             - containerPort: 8082
           env:
+            # Database configuration from ConfigMap
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_PORT
+            - name: DB_NAME_ORDERS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_NAME_ORDERS
+            # Build R2DBC URL from components
             - name: SPRING_R2DBC_URL
-              value: "r2dbc:postgresql://postgres:5432/amazon_orders"
+              value: "r2dbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME_ORDERS)"
+            # Database credentials from Secrets
             - name: POSTGRES_USER
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: "SecurePostgres123!"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
           resources:
             requests:
               cpu: "100m"

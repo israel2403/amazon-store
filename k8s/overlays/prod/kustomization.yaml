@@ -17,6 +17,11 @@ bases:
   - ../../infrastructure/vault
   - ../../infrastructure/jenkins
 
+# Production-specific resources
+resources:
+  - configmap.yaml
+  - vault-auth.yaml
+
 # Production patches - full HA
 patchesStrategicMerge:
   - apps-prod-patch.yaml

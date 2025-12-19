@@ -27,20 +27,44 @@ spec:
         env:
         - name: APP_PORT
           value: "3000"
+        # Kafka configuration from ConfigMap
         - name: KAFKA_BROKERS
-          value: "kafka-0.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-1.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-2.kafka-headless.amazon-api.svc.cluster.local:9092"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_BROKERS
         - name: KAFKA_CLIENT_ID
-          value: "notifications-service"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_CLIENT_ID
         - name: KAFKA_GROUP_ID
           value: "notifications-service-group"
         - name: KAFKA_TOPIC_ORDER_CREATED
-          value: "order.created"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_TOPIC_ORDER_CREATED
         - name: KAFKA_TOPIC_USER_CREATED
-          value: "user.created"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_TOPIC_USER_CREATED
         - name: KAFKA_TOPIC_NOTIFICATION_EMAIL
-          value: "notification.email"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: KAFKA_TOPIC_NOTIFICATION_EMAIL
         - name: NODE_ENV
-          value: "production"
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: LOG_LEVEL
         livenessProbe:
           httpGet:
             path: /health

@@ -26,9 +26,15 @@ spec:
             - name: POSTGRES_DB
               value: "amazon_orders"
             - name: POSTGRES_USER
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: "SecurePostgres123!"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data

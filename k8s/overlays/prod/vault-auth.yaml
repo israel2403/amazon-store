@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: amazon-store-sa
+  namespace: amazon-api
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vault-token
+  namespace: amazon-api
+  annotations:
+    kubernetes.io/service-account.name: amazon-store-sa
+type: Opaque
+stringData:
+  # This will be populated from Vault
+  # For now, it's a placeholder that will be configured during Vault setup
+  vault-token: "CONFIGURE_THIS_FROM_VAULT"
+---
+# Vault Agent Injector annotations will be added to deployments
+# to automatically inject secrets from Vault
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: amazon-api
+data:
+  vault-addr: "http://vault.vault-system.svc.cluster.local:8200"
+  vault-role: "amazon-store"
+  vault-secret-path: "secret/data/amazon-store/prod"

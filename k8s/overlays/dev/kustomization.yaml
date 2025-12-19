@@ -15,6 +15,11 @@ bases:
   - ../../apps/notifications
   - ../../infrastructure/kafka
 
+# Development-specific resources
+resources:
+  - configmap.yaml
+  - secrets.yaml
+
 # Development patches - reduced resources
 patchesStrategicMerge:
   - kafka-dev-patch.yaml
