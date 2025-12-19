@@ -17,6 +17,7 @@ data:
   # Application Configuration
   NODE_ENV: "development"
   LOG_LEVEL: "debug"
+  SPRING_PROFILES_ACTIVE: "development"
   
   # Kafka Topics
   KAFKA_TOPIC_ORDER_CREATED: "order.created"

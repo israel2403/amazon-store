@@ -23,6 +23,43 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8081
+          env:
+            # Database configuration from ConfigMap
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_PORT
+            - name: DB_NAME_USERS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_NAME_USERS
+            # Build R2DBC URL from components
+            - name: SPRING_R2DBC_URL
+              value: "r2dbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME_USERS)"
+            # Database credentials from Secrets
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
+            # Spring Profile
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: SPRING_PROFILES_ACTIVE
           livenessProbe:
             httpGet:
               path: /users-api/hello
