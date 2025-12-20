@@ -36,10 +36,6 @@ pipeline {
         K8S_NAMESPACE = "${env.K8S_NAMESPACE ?: 'amazon-api'}"
     }
 
-    options {
-        timestamps()
-    }
-
     stages {
         stage('Load Vault Secrets') {
             steps {
