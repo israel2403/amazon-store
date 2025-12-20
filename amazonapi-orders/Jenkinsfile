@@ -93,8 +93,9 @@ pipeline {
                 script {
                     echo 'Deploying to Production environment (amazon-api-prod)...'
                     sh '''
-                        kubectl apply -k k8s/overlays/prod/
-                        kubectl rollout restart -n amazon-api-prod deployment/amazonapi-orders-deployment
+                        kubectl apply -f k8s/apps/orders/deployment.yaml -n amazon-api-prod
+                        kubectl apply -f k8s/apps/orders/service.yaml -n amazon-api-prod
+                        kubectl set image deployment/amazonapi-orders-deployment amazonapi-orders=${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -n amazon-api-prod
                         kubectl rollout status -n amazon-api-prod deployment/amazonapi-orders-deployment --timeout=5m
                     '''
                 }
