@@ -1,3 +1,23 @@
+def loadVaultSecrets() {
+    withVault([
+        configuration: [
+            vaultUrl: 'http://vault.amazon-api.svc.cluster.local:8200',
+            vaultCredentialId: 'vault-root-token',
+            engineVersion: 2
+        ],
+        vaultSecrets: [[
+            path: 'kv/amazon-api/dockerhub',
+            secretValues: [
+                [envVar: 'DOCKERHUB_USERNAME', vaultKey: 'username'],
+                [envVar: 'DOCKERHUB_TOKEN', vaultKey: 'token']
+            ]
+        ]]
+    ]) {
+        env.DOCKERHUB_USERNAME = "${DOCKERHUB_USERNAME}"
+        env.DOCKERHUB_TOKEN = "${DOCKERHUB_TOKEN}"
+    }
+}
+
 pipeline {
     agent any
 
@@ -9,11 +29,38 @@ pipeline {
     }
 
     stages {
+        stage('Load Vault Secrets') {
+            steps {
+                script {
+                    loadVaultSecrets()
+                }
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 dir(env.SERVICE_DIR) {
                     sh 'npm ci'
                     sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main|develop|dev).*/
+                }
+            }
+            steps {
+                dir(env.SERVICE_DIR) {
+                    sh """
+                        echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker logout
+                    """
                 }
             }
         }

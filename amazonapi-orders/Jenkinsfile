@@ -1,3 +1,36 @@
+def loadVaultSecrets() {
+    withVault([
+        configuration: [
+            vaultUrl: 'http://vault.amazon-api.svc.cluster.local:8200',
+            vaultCredentialId: 'vault-root-token',
+            engineVersion: 2
+        ],
+        vaultSecrets: [
+            [
+                path: 'kv/amazon-api/dockerhub',
+                secretValues: [
+                    [envVar: 'DOCKERHUB_USERNAME', vaultKey: 'username'],
+                    [envVar: 'DOCKERHUB_TOKEN', vaultKey: 'token']
+                ]
+            ],
+            [
+                path: 'kv/amazon-api/postgres',
+                secretValues: [
+                    [envVar: 'POSTGRES_DB', vaultKey: 'database'],
+                    [envVar: 'POSTGRES_USER', vaultKey: 'username'],
+                    [envVar: 'POSTGRES_PASSWORD', vaultKey: 'password']
+                ]
+            ]
+        ]
+    ]) {
+        env.DOCKERHUB_USERNAME = "${DOCKERHUB_USERNAME}"
+        env.DOCKERHUB_TOKEN = "${DOCKERHUB_TOKEN}"
+        env.POSTGRES_DB = "${POSTGRES_DB}"
+        env.POSTGRES_USER = "${POSTGRES_USER}"
+        env.POSTGRES_PASSWORD = "${POSTGRES_PASSWORD}"
+    }
+}
+
 pipeline {
     agent any
 
@@ -9,11 +42,38 @@ pipeline {
     }
 
     stages {
+        stage('Load Vault Secrets') {
+            steps {
+                script {
+                    loadVaultSecrets()
+                }
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 dir(env.SERVICE_DIR) {
                     sh 'chmod +x gradlew'
                     sh './gradlew clean build'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            when {
+                expression {
+                    return env.GIT_BRANCH ==~ /.*(master|main|develop|dev).*/
+                }
+            }
+            steps {
+                dir(env.SERVICE_DIR) {
+                    sh """
+                        echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                        docker logout
+                    """
                 }
             }
         }
