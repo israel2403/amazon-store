@@ -52,8 +52,8 @@ spec:
         - name: VAULT_ROOT_TOKEN
           valueFrom:
             secretKeyRef:
-              name: vault-secrets
-              key: root-token
+              name: jenkins-secrets
+              key: vault-root-token
         - name: VAULT_ADDR
           value: "http://vault.amazon-api.svc.cluster.local:8200"
         - name: JAVA_OPTS
