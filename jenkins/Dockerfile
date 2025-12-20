@@ -38,8 +38,8 @@ RUN jenkins-plugin-cli --plugins \
     hashicorp-vault-plugin \
     github-branch-source
 
-# Add jenkins user to docker group (use host's docker group ID)
-RUN groupadd -g 984 docker || true && \
+# Add jenkins user to docker group (use minikube's docker group ID)
+RUN groupadd -g 999 docker || true && \
     usermod -aG docker jenkins
 
 USER jenkins
