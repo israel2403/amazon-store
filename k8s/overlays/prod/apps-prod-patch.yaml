@@ -47,9 +47,6 @@ spec:
     spec:
       containers:
       - name: notifications-service
-        env:
-        - name: NODE_ENV
-          value: "production"
         resources:
           requests:
             cpu: "200m"
