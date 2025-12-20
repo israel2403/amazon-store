@@ -20,3 +20,6 @@
 jenkins_home/
 
 VAULT_MIGRATION.md
+# Vault secrets
+VAULT-UNSEAL.md
+k8s/infrastructure/jenkins/jenkins-secrets.yaml
