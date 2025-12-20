@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: amazon-api
 
 resources:
+  - vault-config.yaml
   - vault-configmap.yaml
   - vault-pvc.yaml
   - vault-deployment.yaml

@@ -1,3 +1,23 @@
+def loadDockerHubCredsFromVault() {
+    withVault([
+        configuration: [
+            vaultUrl: 'http://vault.amazon-api.svc.cluster.local:8200',
+            vaultCredentialId: 'vault-root-token',
+            engineVersion: 2
+        ],
+        vaultSecrets: [[
+            path: 'kv/amazon-api/dockerhub',
+            secretValues: [
+                [envVar: 'DOCKERHUB_USERNAME', vaultKey: 'username'],
+                [envVar: 'DOCKERHUB_TOKEN', vaultKey: 'token']
+            ]
+        ]]
+    ]) {
+        env.DOCKERHUB_USERNAME = "${DOCKERHUB_USERNAME}"
+        env.DOCKERHUB_TOKEN = "${DOCKERHUB_TOKEN}"
+    }
+}
+
 pipeline {
     agent any
 
@@ -6,11 +26,23 @@ pipeline {
         IMAGE_NAME    = 'notifications-service'
         IMAGE_TAG     = "${env.BUILD_NUMBER}"
         K8S_NAMESPACE = "${env.K8S_NAMESPACE ?: 'amazon-api'}"
-        DOCKERHUB_USERNAME = credentials('dockerhub-username')
-        DOCKERHUB_TOKEN = credentials('dockerhub-token')
     }
 
     stages {
+        stage('Load Credentials') {
+            steps {
+                script {
+                    if (env.GIT_BRANCH == 'master') {
+                        echo 'Loading credentials from Vault for production build...'
+                        loadDockerHubCredsFromVault()
+                    } else {
+                        echo 'Loading credentials from K8s secrets for development build...'
+                        env.DOCKERHUB_USERNAME = credentials('dockerhub-username')
+                        env.DOCKERHUB_TOKEN = credentials('dockerhub-token')
+                    }
+                }
+            }
+        }
 
         stage('Build & Test') {
             steps {

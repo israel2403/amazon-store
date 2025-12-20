@@ -24,48 +24,37 @@ spec:
         - containerPort: 8200
           name: vault
         env:
-        - name: VAULT_DEV_ROOT_TOKEN_ID
-          valueFrom:
-            secretKeyRef:
-              name: vault-secrets
-              key: root-token
-        - name: VAULT_DEV_LISTEN_ADDRESS
-          value: "0.0.0.0:8200"
         - name: VAULT_ADDR
           value: "http://127.0.0.1:8200"
-        command:
-        - vault
+        - name: SKIP_SETCAP
+          value: "true"
+        - name: SKIP_CHOWN
+          value: "true"
+        command: ["/bin/vault"]
+        args:
         - server
-        - -dev
-        - -dev-root-token-id=$(VAULT_DEV_ROOT_TOKEN_ID)
-        securityContext:
-          capabilities:
-            add:
-            - IPC_LOCK
+        - -config=/vault/config/vault.hcl
         volumeMounts:
         - name: vault-data
           mountPath: /vault/data
         - name: vault-logs
           mountPath: /vault/logs
-        - name: vault-init-script
-          mountPath: /vault/scripts
+        - name: vault-config
+          mountPath: /vault/config
         livenessProbe:
-          exec:
-            command:
-            - vault
-            - status
-          initialDelaySeconds: 10
+          httpGet:
+            path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+            port: 8200
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 5
         readinessProbe:
-          exec:
-            command:
-            - vault
-            - status
-          initialDelaySeconds: 5
+          httpGet:
+            path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+            port: 8200
+          initialDelaySeconds: 10
           periodSeconds: 5
-          timeoutSeconds: 5
+          timeoutSeconds: 3
       volumes:
       - name: vault-data
         persistentVolumeClaim:
@@ -73,7 +62,7 @@ spec:
       - name: vault-logs
         persistentVolumeClaim:
           claimName: vault-logs
-      - name: vault-init-script
+      - name: vault-config
         configMap:
-          name: vault-init-script
-          defaultMode: 0755
+          name: vault-config
+          defaultMode: 0644
