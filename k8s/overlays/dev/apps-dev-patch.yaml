@@ -47,11 +47,6 @@ spec:
     spec:
       containers:
       - name: notifications-service
-        env:
-        - name: KAFKA_BROKERS
-          value: "kafka-0.kafka-headless.amazon-api.svc.cluster.local:9092"
-        - name: NODE_ENV
-          value: "development"
         resources:
           requests:
             cpu: "50m"

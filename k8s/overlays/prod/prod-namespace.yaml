@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: amazon-api-prod
+  labels:
+    environment: production
+    managed-by: kustomize
