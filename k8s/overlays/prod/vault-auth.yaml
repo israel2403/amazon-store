@@ -3,13 +3,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: amazon-store-sa
-  namespace: amazon-api
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: vault-token
-  namespace: amazon-api
   annotations:
     kubernetes.io/service-account.name: amazon-store-sa
 type: Opaque

@@ -3,13 +3,10 @@ kind: Job
 metadata:
   name: kafka-topics-init
 spec:
-  ttlSecondsAfterFinished: 100
   template:
     spec:
-      restartPolicy: OnFailure
       containers:
       - name: kafka-topics-creator
-        image: confluentinc/cp-kafka:7.5.0
         command:
         - /bin/bash
         - -c
@@ -17,7 +14,7 @@ spec:
           echo "Waiting for Kafka to be ready..."
           sleep 30
           
-          KAFKA_BROKERS="kafka-0.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-1.kafka-headless.amazon-api.svc.cluster.local:9092,kafka-2.kafka-headless.amazon-api.svc.cluster.local:9092"
+          KAFKA_BROKERS="kafka-0.kafka-headless.amazon-api-prod.svc.cluster.local:9092,kafka-1.kafka-headless.amazon-api-prod.svc.cluster.local:9092,kafka-2.kafka-headless.amazon-api-prod.svc.cluster.local:9092"
           
           echo "Creating topics..."
           

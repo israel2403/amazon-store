@@ -11,12 +11,18 @@ bases:
   - ../../apps/users
   - ../../apps/orders
   - ../../apps/notifications
+  - ../../infrastructure/kafka
+  - ../../base/postgres
 
 resources:
   - dev-namespace.yaml
   - configmap.yaml
   - secrets.yaml
+  - ingress-dev.yaml
 
 # Development patches - reduced resources
 patchesStrategicMerge:
   - apps-dev-patch.yaml
+  - kafka-dev-patch.yaml
+  - kafka-topics-dev-patch.yaml
+  - postgres-dev-patch.yaml

@@ -1,0 +1,121 @@
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                    AMAZON STORE - ISOLATED ENVIRONMENTS                          ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                         DEVELOPMENT ENVIRONMENT                                  │
+│                      Namespace: amazon-api-dev                                   │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────┐
+    │   Kong Dev      │  NodePort: 30081/30444
+    │ (kong-dev ns)   │  Host: dev.amazon-api.local
+    └────────┬────────┘
+             │
+    ┌────────▼────────────────────────────┐
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Users API (1 replica)       │  │
+    │  │  CPU: 50m / RAM: 64Mi        │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Orders API (1 replica)      │  │
+    │  │  CPU: 50m / RAM: 64Mi        │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Notifications (1 replica)   │  │
+    │  │  CPU: 50m / RAM: 64Mi        │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    └─────────┬────────────────┬──────────┘
+              │                │
+    ┌─────────▼────────┐  ┌───▼──────────────┐
+    │  PostgreSQL      │  │  Kafka (1 node)  │
+    │  1 replica       │  │  Replication: 1  │
+    │  Storage: 5Gi    │  │  Storage: 5Gi    │
+    │  Secrets: K8s    │  │                  │
+    └──────────────────┘  └──────────────────┘
+
+    DNS: postgres.amazon-api-dev.svc.cluster.local
+    DNS: kafka-0.kafka-headless.amazon-api-dev.svc.cluster.local
+
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                         PRODUCTION ENVIRONMENT                                   │
+│                      Namespace: amazon-api-prod                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────┐
+    │   Kong Prod     │  NodePort: 30080/30443
+    │ (kong-prod ns)  │  Host: api.amazon-store.com
+    │  3 replicas     │
+    └────────┬────────┘
+             │
+    ┌────────▼────────────────────────────┐
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Users API (5 replicas)      │  │
+    │  │  CPU: 200m / RAM: 256Mi      │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Orders API (5 replicas)     │  │
+    │  │  CPU: 200m / RAM: 256Mi      │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    │  ┌──────────────────────────────┐  │
+    │  │  Notifications (3 replicas)  │  │
+    │  │  CPU: 200m / RAM: 256Mi      │  │
+    │  └──────────────────────────────┘  │
+    │                                     │
+    └─────────┬────────────────┬──────────┘
+              │                │
+    ┌─────────▼────────┐  ┌───▼──────────────────────────┐
+    │  PostgreSQL      │  │  Kafka Cluster (3 nodes)     │
+    │  1 replica       │  │  ┌────┐  ┌────┐  ┌────┐     │
+    │  Storage: 20Gi   │  │  │ K0 │  │ K1 │  │ K2 │     │
+    │  Secrets: Vault  │  │  └────┘  └────┘  └────┘     │
+    └──────────────────┘  │  Replication: 3              │
+                          │  Storage: 20Gi per node      │
+                          └──────────────────────────────┘
+
+    DNS: postgres.amazon-api-prod.svc.cluster.local
+    DNS: kafka-{0,1,2}.kafka-headless.amazon-api-prod.svc.cluster.local
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                              ISOLATION BENEFITS                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+✓ Separate Namespaces:        amazon-api-dev  vs  amazon-api-prod
+✓ Separate Kong Gateways:     kong-dev (30081)  vs  kong-prod (30080)
+✓ Isolated Databases:          postgres.amazon-api-dev  vs  postgres.amazon-api-prod
+✓ Isolated Kafka Clusters:     kafka-*.amazon-api-dev  vs  kafka-*.amazon-api-prod
+✓ Independent Volumes (PVCs):  Each environment has its own storage
+✓ Separate Secrets:            K8s Secrets (dev)  vs  Vault (prod)
+✓ Resource Optimization:       Minimal resources (dev)  vs  HA config (prod)
+✓ Simultaneous Access:         Both environments run concurrently
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                              DEPLOYMENT COMMANDS                                 ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+# Deploy both environments
+./k8s/scripts/deploy-environments.sh both
+
+# Deploy only dev
+./k8s/scripts/deploy-environments.sh dev
+
+# Deploy only prod
+./k8s/scripts/deploy-environments.sh prod
+
+# Check dev status
+kubectl get all -n amazon-api-dev
+kubectl get all -n kong-dev
+
+# Check prod status
+kubectl get all -n amazon-api-prod
+kubectl get all -n kong-prod

@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: amazon-api-users-deployment
-  namespace: amazon-api
   labels:
     app: amazon-api-users
     tier: backend

@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notifications-service
-  namespace: amazon-api
   labels:
     app: notifications-service
     tier: backend

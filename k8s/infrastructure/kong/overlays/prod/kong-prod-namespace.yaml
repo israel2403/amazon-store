@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kong-prod
+  labels:
+    project: amazon-api
+    component: ingress
+    environment: production

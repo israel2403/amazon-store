@@ -11,12 +11,18 @@ bases:
   - ../../apps/users
   - ../../apps/orders
   - ../../apps/notifications
+  - ../../infrastructure/kafka
+  - ../../base/postgres
 
 resources:
   - prod-namespace.yaml
   - configmap.yaml
   - vault-auth.yaml
+  - ingress-prod.yaml
 
 # Production patches - full HA
 patchesStrategicMerge:
   - apps-prod-patch.yaml
+  - kafka-prod-patch.yaml
+  - kafka-topics-prod-patch.yaml
+  - postgres-prod-patch.yaml
