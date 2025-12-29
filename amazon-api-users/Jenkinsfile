@@ -77,7 +77,6 @@ pipeline {
                     echo 'Deploying to Development environment (amazon-api-dev)...'
                     sh '''
                         kubectl apply -k k8s/overlays/dev/
-                        kubectl rollout restart -n amazon-api-dev deployment/amazon-api-users-deployment
                         kubectl rollout status -n amazon-api-dev deployment/amazon-api-users-deployment --timeout=5m
                     '''
                 }
