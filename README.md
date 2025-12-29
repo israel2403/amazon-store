@@ -96,7 +96,9 @@ kubectl cluster-info
 
 **This project uses separate pipelines for each microservice.**
 
-For detailed instructions, see: **[SEPARATE_PIPELINES_SETUP.md](SEPARATE_PIPELINES_SETUP.md)**
+For detailed instructions, see: **[docs/archive/SEPARATE_PIPELINES_SETUP.md](docs/archive/SEPARATE_PIPELINES_SETUP.md)**
+
+**Note:** For current documentation, see [docs/README.md](docs/README.md)
 
 **Quick Setup:**
 
