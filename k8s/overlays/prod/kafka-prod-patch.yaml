@@ -11,8 +11,6 @@ spec:
         env:
         - name: KAFKA_CONTROLLER_QUORUM_VOTERS
           value: "0@kafka-0.kafka-headless.amazon-api-prod.svc.cluster.local:9093"
-        - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://$(HOSTNAME).kafka-headless.amazon-api-prod.svc.cluster.local:9092"
         - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
           value: "1"
         - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
@@ -23,6 +21,33 @@ spec:
           value: "1"
         - name: KAFKA_MIN_INSYNC_REPLICAS
           value: "1"
+        command:
+        - bash
+        - -c
+        - |
+          # Extract node ID from hostname (kafka-0 -> 0)
+          export KAFKA_NODE_ID=${HOSTNAME##*-}
+          
+          # Format log directories
+          export KAFKA_LOG_DIRS=/var/lib/kafka/data
+          
+          # Set KAFKA_ADVERTISED_LISTENERS with expanded hostname
+          export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://${HOSTNAME}.kafka-headless.amazon-api-prod.svc.cluster.local:9092"
+          
+          # Create kraft.properties with node.id
+          cat > /tmp/kraft-runtime.properties << EOF
+          node.id=${KAFKA_NODE_ID}
+          $(cat /etc/kafka/kraft.properties)
+          EOF
+          
+          # Generate cluster metadata if needed
+          if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+            echo "Formatting storage directory for node ${KAFKA_NODE_ID}..."
+            kafka-storage format -t $CLUSTER_ID -c /tmp/kraft-runtime.properties
+          fi
+          
+          # Start Kafka
+          exec /etc/confluent/docker/run
         resources:
           requests:
             cpu: "500m"

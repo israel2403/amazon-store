@@ -1,0 +1,28 @@
+# External Kafka Prod Cluster - Service and Endpoints
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-external
+  namespace: amazon-api-prod
+spec:
+  ports:
+  - port: 9092
+    targetPort: 9092
+    protocol: TCP
+    name: kafka
+  clusterIP: None
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kafka-external
+  namespace: amazon-api-prod
+subsets:
+- addresses:
+  - ip: 192.168.50.21
+  - ip: 192.168.50.22
+  - ip: 192.168.50.23
+  ports:
+  - port: 9092
+    protocol: TCP
+    name: kafka

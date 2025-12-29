@@ -11,7 +11,6 @@ bases:
   - ../../apps/users
   - ../../apps/orders
   - ../../apps/notifications
-  - ../../infrastructure/kafka
   - ../../base/postgres
 
 resources:
@@ -19,10 +18,9 @@ resources:
   - configmap.yaml
   - vault-auth.yaml
   - ingress-prod.yaml
+  - kafka-external-endpoints.yaml
 
 # Production patches - full HA
 patchesStrategicMerge:
   - apps-prod-patch.yaml
-  - kafka-prod-patch.yaml
-  - kafka-topics-prod-patch.yaml
   - postgres-prod-patch.yaml

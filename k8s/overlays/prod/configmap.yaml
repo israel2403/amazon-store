@@ -9,9 +9,11 @@ data:
   DB_NAME_ORDERS: "amazon_orders"
   DB_NAME_USERS: "amazon_users"
   
-  # Kafka Configuration (3 brokers for HA)
-  KAFKA_BROKERS: "kafka-0.kafka-headless.amazon-api-prod.svc.cluster.local:9092"
+  # Kafka Configuration (external 3-node prod cluster)
+  # Direct connection to Kafka brokers on host 192.168.1.77
+  KAFKA_BROKERS: "192.168.1.77:9095,192.168.1.77:9096,192.168.1.77:9097"
   KAFKA_CLIENT_ID: "amazon-store-prod"
+  KAFKA_CLUSTER_ID: "9ZiwT0fbRfyUUidryAyUZg"
   
   # Application Configuration
   NODE_ENV: "production"

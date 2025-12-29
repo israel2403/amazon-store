@@ -1,0 +1,28 @@
+# External Kafka Dev Cluster - Service and Endpoints
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-external
+  namespace: amazon-api-dev
+spec:
+  ports:
+  - port: 9092
+    targetPort: 9092
+    protocol: TCP
+    name: kafka
+  clusterIP: None
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: kafka-external
+  namespace: amazon-api-dev
+subsets:
+- addresses:
+  - ip: 192.168.50.11
+  - ip: 192.168.50.12
+  - ip: 192.168.50.13
+  ports:
+  - port: 9092
+    protocol: TCP
+    name: kafka
