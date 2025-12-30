@@ -32,14 +32,8 @@ pipeline {
         stage('Load Credentials') {
             steps {
                 script {
-                    if (env.GIT_BRANCH == 'master') {
-                        echo 'Loading credentials from Vault for production build...'
-                        loadDockerHubCredsFromVault()
-                    } else {
-                        echo 'Loading credentials from K8s secrets for development build...'
-                        env.DOCKERHUB_USERNAME = credentials('dockerhub-username')
-                        env.DOCKERHUB_TOKEN = credentials('dockerhub-token')
-                    }
+                    echo 'Loading credentials from Vault...'
+                    loadDockerHubCredsFromVault()
                 }
             }
         }
