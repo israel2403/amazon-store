@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: amazon-api-users-test
+
+logging:
+  level:
+    root: WARN
+    com.hfernandez.amazonapi.users: INFO
