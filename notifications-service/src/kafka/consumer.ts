@@ -1,15 +1,24 @@
 import { Kafka, logLevel } from "kafkajs";
 import { env, kafkaBrokers } from "../config/env.js";
+import { config } from "../config/index.js";
 import type { OrderCreatedEvent } from "../types/events.js";
 
 const kafka = new Kafka({
   clientId: env.KAFKA_CLIENT_ID,
   brokers: kafkaBrokers,
-  logLevel: logLevel.NOTHING
+  logLevel: config.logging.level === "debug" ? logLevel.DEBUG : logLevel.WARN,
+  retry: {
+    initialRetryTime: config.kafka.retry.initialRetryTime,
+    retries: config.kafka.retry.retries,
+  },
+  requestTimeout: config.kafka.requestTimeout,
 });
 
 export async function startConsumers(): Promise<void> {
-  const consumer = kafka.consumer({ groupId: env.KAFKA_GROUP_ID });
+  const consumer = kafka.consumer({ 
+    groupId: env.KAFKA_GROUP_ID,
+    sessionTimeout: config.kafka.sessionTimeout,
+  });
 
   await consumer.connect();
   await consumer.subscribe({ topic: env.KAFKA_TOPIC_ORDER_CREATED, fromBeginning: false });

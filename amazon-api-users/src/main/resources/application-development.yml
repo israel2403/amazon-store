@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: amazon-api-users
+  
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/amazon_users}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    pool:
+      initial-size: 5
+      max-size: 10
+      max-idle-time: 30m
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: false
+  
+  sql:
+    init:
+      mode: never
+
+server:
+  port: 8081
+
+# Development logging - verbose for debugging
+logging:
+  level:
+    root: INFO
+    com.hfernandez.amazonapi.users: DEBUG
+    org.springframework.r2dbc: DEBUG
+    org.springframework.web: DEBUG
+    io.r2dbc.postgresql.QUERY: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Development-specific settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
