@@ -354,6 +354,68 @@ kubectl get secret jenkins-secrets -n amazon-api -o jsonpath='{.data.vault-root-
 
 ---
 
+### 5. Pipeline Fails with "denied: requested access to the resource is denied"
+
+**Error in Jenkins Console:**
+```
+bc7091554844: Layer already exists
+denied: requested access to the resource is denied
+ERROR: script returned exit code 1
+```
+
+**Root Cause:**
+This error occurs when Jenkins tries to push Docker images to DockerHub but authentication fails. The DockerHub credentials in Vault are either:
+- Invalid/expired
+- Incorrectly formatted
+- Missing
+
+**Diagnosis:**
+```bash
+# Check if DockerHub credentials exist in Vault
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- sh -c "VAULT_TOKEN=hvs.qb4jSCwkdHBZwFZw14A7M7qV vault kv get kv/amazon-api/dockerhub"
+```
+
+**What to check:**
+- Token should be a valid DockerHub Personal Access Token (starts with `dckr_pat_`)
+- Token should be 36-40 characters long
+- Username should match your DockerHub username
+
+**Solution:**
+
+1. **Generate a new DockerHub Personal Access Token:**
+   - Go to https://hub.docker.com/settings/security
+   - Click "New Access Token"
+   - Name: `jenkins-ci`
+   - Permissions: `Read, Write, Delete`
+   - Copy the token (you won't see it again!)
+
+2. **Update the token in Vault:**
+   ```bash
+   # Replace YOUR_NEW_TOKEN with the actual token
+   kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- sh -c "VAULT_TOKEN=hvs.qb4jSCwkdHBZwFZw14A7M7qV vault kv put kv/amazon-api/dockerhub username=israelhf24 token=YOUR_NEW_TOKEN"
+   ```
+
+3. **Verify the token was updated:**
+   ```bash
+   kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- sh -c "VAULT_TOKEN=hvs.qb4jSCwkdHBZwFZw14A7M7qV vault kv get kv/amazon-api/dockerhub"
+   ```
+
+4. **Re-run the Jenkins pipeline** - it should now successfully authenticate and push to DockerHub.
+
+**Important Notes:**
+- DockerHub tokens expire or can be revoked - regenerate them periodically
+- Never commit tokens to Git
+- Use Vault for all credential management
+- **DO NOT** run `fix-jenkins-permissions.sh` - this is NOT a permissions issue
+
+**Alternative: Test DockerHub login manually from Jenkins pod:**
+```bash
+JENKINS_POD=$(kubectl get pod -n amazon-api -l app=jenkins -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n amazon-api $JENKINS_POD -- sh -c "echo 'YOUR_TOKEN' | docker login -u israelhf24 --password-stdin"
+```
+
+---
+
 ## Vault Issues
 
 ### 1. Check Vault Status
