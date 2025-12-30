@@ -364,7 +364,23 @@ ERROR: script returned exit code 1
 ```
 
 **Root Cause:**
-This error occurs when Jenkins tries to push Docker images to DockerHub but authentication fails. The DockerHub credentials in Vault are either:
+This error can occur for several reasons:
+
+1. **Intermittent DockerHub API issue** (most common - just retry!)
+2. **Multiple builds pushing simultaneously** causing layer conflicts
+3. **DockerHub rate limiting** (rare for authenticated users)
+4. **Invalid/expired DockerHub credentials** (but would fail for all pipelines)
+
+**Quick Fix - Try First:**
+```bash
+# Just re-run the pipeline - it often succeeds on retry!
+```
+
+**If other pipelines (users, notifications) succeeded:**
+This is likely a **transient DockerHub API issue**, not a credential problem. Just retry the build.
+
+**If ALL pipelines fail with this error:**
+Then it's a credential issue. The DockerHub credentials in Vault are either:
 - Invalid/expired
 - Incorrectly formatted
 - Missing
