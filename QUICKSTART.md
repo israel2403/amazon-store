@@ -13,66 +13,82 @@ If any issues are found, install the missing tools.
 
 ## 🚀 5-Minute Deployment
 
-### 1. Generate Environment File (Already Done!)
-```bash
-# Your credentials are in ~/.zshrc
-# .env file was already generated
-cat .env  # Verify credentials are loaded
-```
-
-### 2. Start Jenkins
-```bash
-docker-compose up -d
-docker logs -f amazon-api-jenkins  # Wait for "Jenkins is fully up and running"
-```
-
-**Access Jenkins**: http://localhost:8080
-- Username: `admin`
-- Password: (from your `.env` - check with `echo $JENKINS_ADMIN_PASSWORD`)
-
-### 3. Start Minikube
+### 1. Start Minikube
 ```bash
 minikube start
 kubectl cluster-info  # Verify cluster is running
 ```
 
-### 4. Test the App Locally (Optional)
+### 2. Deploy Infrastructure (Jenkins, Vault, PostgreSQL)
 ```bash
-cd amazon-api-users
-./mvnw spring-boot:run
+# Deploy to dev environment
+kubectl apply -k k8s/overlays/dev/
+
+# Wait for Jenkins to be ready (takes 2-3 minutes)
+kubectl rollout status -n amazon-api deployment/jenkins --timeout=5m
+
+# Check all pods are running
+kubectl get pods -n amazon-api
 ```
 
-In another terminal:
+### 3. Access Jenkins
 ```bash
-curl http://localhost:8081/users-api
-# Expected: {"helloWorldMsg":"Hello World!!!"}
+# Get Jenkins URL (NodePort service)
+minikube service jenkins -n amazon-api --url
+# Or use: http://$(minikube ip):30081
 ```
 
-### 5. Create Jenkins Pipeline
+**Jenkins Credentials:**
+- URL: http://192.168.49.2:30081 (or the URL from above command)
+- Username: `admin`
+- Password: `admin123`
 
-1. Go to Jenkins: http://localhost:8080
-2. Click **"New Item"**
-3. Enter name: `amazon-api-users-pipeline`
-4. Select **"Pipeline"**, click **OK**
-5. Scroll to **"Pipeline"** section:
+### 4. Unseal Vault (if needed)
+```bash
+# Check Vault status
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- vault status
+
+# If sealed, unseal it
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- vault operator unseal jmm68gKlxBNmr4PNK1k5TPvbijP+XNs6DwN+YCK6jP8=
+```
+
+### 5. Create Jenkins Pipelines
+
+1. Go to Jenkins: http://192.168.49.2:30081 (use the URL from step 3)
+2. Login with `admin` / `admin123`
+
+**Create Users Service Pipeline:**
+1. Click **"New Item"**
+2. Enter name: `amazon-api-users-pipeline`
+3. Select **"Pipeline"**, click **OK**
+4. Scroll to **"Pipeline"** section:
    - **Definition**: "Pipeline script from SCM"
    - **SCM**: Git
    - **Repository URL**: `https://github.com/YOUR_USERNAME/amazon-store.git`
    - **Branch**: `*/master`
-   - **Script Path**: `Jenkinsfile`
-6. Click **Save**
+   - **Script Path**: `amazon-api-users/Jenkinsfile`
+5. Click **Save**
 
-### 6. Run the Pipeline
+**Create Orders Service Pipeline:**
+1. Repeat steps above with name: `amazonapi-orders-pipeline`
+2. **Script Path**: `amazonapi-orders/Jenkinsfile`
 
-1. Click **"Build Now"**
+**Create Notifications Service Pipeline:**
+1. Repeat steps above with name: `notifications-service-pipeline`
+2. **Script Path**: `notifications-service/Jenkinsfile`
+
+### 6. Run the Pipelines
+
+1. Click on each pipeline and select **"Build Now"**
 2. Watch the pipeline execute:
-   - ✅ Checkout code
-   - ✅ Build & test with Maven
+   - ✅ Load credentials from Vault
+   - ✅ Build & test (Maven/Gradle/npm)
    - ✅ Build Docker image
    - ✅ Push to DockerHub
-   - ✅ Deploy to Kubernetes
+   - ✅ Deploy to Development (amazon-api-dev)
+   - ✅ Deploy to Production (amazon-api-prod, master branch only)
 
-### 7. Test the Deployed App
+### 7. Test the Deployed Apps
 
 ```bash
 # Get the service URL
@@ -116,14 +132,35 @@ kubectl scale deployment amazon-api-users-deployment -n amazon-api --replicas=5
 
 ### Jenkins won't start
 ```bash
-docker logs amazon-api-jenkins
-# Check for errors
+# Check Jenkins pod status
+kubectl get pods -n amazon-api -l app=jenkins
+
+# Check Jenkins logs
+kubectl logs -n amazon-api -l app=jenkins --tail=100
+
+# Restart Jenkins if needed
+kubectl rollout restart -n amazon-api deployment/jenkins
 ```
 
 ### Can't access Jenkins web UI
 ```bash
-# Make sure port 8080 is free
-sudo lsof -i :8080
+# Get Jenkins service details
+kubectl get svc -n amazon-api jenkins
+
+# Get minikube IP and NodePort
+minikube service jenkins -n amazon-api --url
+
+# Or access directly
+echo "http://$(minikube ip):30081"
+```
+
+### Vault is sealed
+```bash
+# Check Vault status
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- vault status
+
+# Unseal Vault
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- vault operator unseal jmm68gKlxBNmr4PNK1k5TPvbijP+XNs6DwN+YCK6jP8=
 ```
 
 ### Minikube issues
@@ -133,19 +170,20 @@ minikube delete  # If needed
 minikube start
 ```
 
-### Pipeline fails
+### Pipeline fails with authentication error
 ```bash
-# Check Jenkins logs
-docker logs amazon-api-jenkins
+# Check Vault has DockerHub credentials
+kubectl exec -n amazon-api $(kubectl get pod -n amazon-api -l app=vault -o jsonpath='{.items[0].metadata.name}') -- sh -c "VAULT_TOKEN=hvs.qb4jSCwkdHBZwFZw14A7M7qV vault kv get kv/amazon-api/dockerhub"
 
-# Verify credentials
-docker exec -it amazon-api-jenkins env | grep DOCKER
+# Check Jenkins can reach Vault
+kubectl exec -n amazon-api -l app=jenkins -- curl -s http://vault.amazon-api.svc.cluster.local:8200/v1/sys/health
 ```
 
 ### Pod not starting
 ```bash
-kubectl describe pod -n amazon-api <pod-name>
-kubectl logs -n amazon-api <pod-name>
+kubectl describe pod -n amazon-api-dev <pod-name>
+kubectl logs -n amazon-api-dev <pod-name>
+kubectl logs -n amazon-api-dev <pod-name> --previous  # If crashed
 ```
 
 ## 📝 What's Next?
@@ -157,40 +195,53 @@ kubectl logs -n amazon-api <pod-name>
 
 ## 📚 Documentation
 
-- **README.md** - Complete documentation
-- **CHANGES.md** - All fixes applied
-- **VAULT_MIGRATION.md** - Production security setup
-- **verify-setup.sh** - Environment verification
+- **README.md** - Complete project documentation
+- **docs/VAULT.md** - Vault setup, unsealing, and secret management
+- **docs/TROUBLESHOOTING.md** - Common issues and solutions
+- **docs/SPRING_PROFILES_GUIDE.md** - Spring profiles configuration
+- **k8s/docs/** - Kubernetes-specific documentation
 
 ## 🔒 Security Reminders
 
-- ⚠️ Never commit `.env` file
-- 🔑 Rotate credentials every 90 days
-- 📋 Review `VAULT_MIGRATION.md` for production
-- 🛡️ Keep your `~/.zshrc` credentials secure
+- 🔑 Jenkins credentials: admin/admin123 (stored in K8s secrets)
+- 🛡️ Vault root token: hvs.qb4jSCwkdHBZwFZw14A7M7qV
+- 🔐 Vault unseal key: jmm68gKlxBNmr4PNK1k5TPvbijP+XNs6DwN+YCK6jP8=
+- ⚠️ Rotate DockerHub tokens every 90 days in Vault
+- 📋 Review `docs/VAULT.md` for production hardening
 
 ## 💡 Tips
 
-**Regenerate .env file:**
+**View all services:**
 ```bash
-./generate-env.sh
+kubectl get all -n amazon-api-dev
+kubectl get all -n amazon-api-prod
 ```
 
-**Clean rebuild:**
+**Restart a service:**
 ```bash
-docker-compose down
-docker-compose up -d --build
+kubectl rollout restart -n amazon-api-dev deployment/amazon-api-users-deployment
 ```
 
-**Reset Kubernetes:**
+**Reset dev environment:**
 ```bash
-kubectl delete namespace amazon-api
-bash k8s/deploy.sh
+kubectl delete namespace amazon-api-dev
+kubectl apply -k k8s/overlays/dev/
 ```
 
-**View Jenkins initial admin password (if needed):**
+**Reset prod environment:**
 ```bash
-docker exec amazon-api-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+kubectl delete namespace amazon-api-prod
+kubectl apply -k k8s/overlays/prod/
+```
+
+**View Jenkins admin password:**
+```bash
+kubectl get secret -n amazon-api jenkins-secrets -o jsonpath='{.data.JENKINS_ADMIN_PASSWORD}' | base64 -d
+```
+
+**Access Jenkins pod directly:**
+```bash
+kubectl exec -it -n amazon-api $(kubectl get pod -n amazon-api -l app=jenkins -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
 ```
 
 ---
