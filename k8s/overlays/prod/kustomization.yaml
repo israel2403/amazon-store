@@ -17,6 +17,7 @@ bases:
 resources:
   - prod-namespace.yaml
   - configmap.yaml
+  - secrets.yaml
   - vault-auth.yaml
   - ingress-prod.yaml
   - kafka-external-endpoints.yaml
