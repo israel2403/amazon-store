@@ -12,6 +12,7 @@ bases:
   - ../../apps/orders
   - ../../apps/notifications
   - ../../base/postgres
+  - ../../base/mysql
 
 resources:
   - prod-namespace.yaml
@@ -24,3 +25,4 @@ resources:
 patchesStrategicMerge:
   - apps-prod-patch.yaml
   - postgres-prod-patch.yaml
+  - mysql-prod-patch.yaml

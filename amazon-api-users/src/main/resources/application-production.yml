@@ -1,17 +1,20 @@
 spring:
   application:
     name: amazon-api-users
-  
-  r2dbc:
-    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/amazon_users}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
-    pool:
-      initial-size: 10
-      max-size: 50
-      max-idle-time: 10m
-      max-acquire-time: 3s
-      max-life-time: 30m
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/amazon_users_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
+    username: ${MYSQL_USER:amazon_user}
+    password: ${MYSQL_PASSWORD:amazon_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          batch_size: 25
   
   flyway:
     enabled: true
@@ -32,8 +35,8 @@ logging:
   level:
     root: WARN
     com.hfernandez.amazonapi.users: INFO
-    org.springframework.r2dbc: WARN
     org.springframework.web: WARN
+    org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 

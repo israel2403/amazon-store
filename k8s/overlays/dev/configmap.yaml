@@ -3,11 +3,16 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  # PostgreSQL Configuration
+  # PostgreSQL Configuration (for Orders service)
   DB_HOST: "postgres.amazon-api-dev.svc.cluster.local"
   DB_PORT: "5432"
   DB_NAME_ORDERS: "amazon_orders"
   DB_NAME_USERS: "amazon_users"
+  
+  # MySQL Configuration (for Users service)
+  MYSQL_HOST: "mysql.amazon-api-dev.svc.cluster.local"
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: "amazon_users"
   
   # Kafka Configuration (external 3-node dev cluster)
   # Direct connection to Kafka brokers on host 192.168.1.77
