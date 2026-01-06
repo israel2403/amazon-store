@@ -53,6 +53,44 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: POSTGRES_PASSWORD
+            # MySQL configuration from ConfigMap
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MYSQL_HOST
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MYSQL_PORT
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MYSQL_DATABASE
+            # MySQL credentials from Secrets
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: MYSQL_PASSWORD
+            # Vault configuration from ConfigMap
+            - name: VAULT_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: VAULT_ADDR
+            - name: VAULT_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: VAULT_TOKEN
             # Spring Profile
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
@@ -63,7 +101,7 @@ spec:
             httpGet:
               path: /users-api/hello
               port: 8081
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
@@ -71,7 +109,7 @@ spec:
             httpGet:
               path: /users-api/hello
               port: 8081
-            initialDelaySeconds: 50
+            initialDelaySeconds: 120
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 3

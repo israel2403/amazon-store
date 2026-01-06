@@ -1,8 +1,29 @@
 spring:
   application:
     name: amazon-api-users-test
+  cloud:
+    vault:
+      enabled: false
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+# Mock Vault pepper for tests
+password_pepper: test-pepper-value-for-unit-tests
 
 logging:
   level:
     root: WARN
-    com.hfernandez.amazonapi.users: INFO
+    com.huerta.amazonapi.users: INFO

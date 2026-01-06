@@ -20,6 +20,10 @@ data:
   KAFKA_CLIENT_ID: "amazon-store-prod"
   KAFKA_CLUSTER_ID: "9ZiwT0fbRfyUUidryAyUZg"
   
+  # Vault Configuration
+  VAULT_ADDR: "http://vault.amazon-api.svc.cluster.local:8200"
+  VAULT_TOKEN: "hvs.qb4jSCwkdHBZwFZw14A7M7qV"
+  
   # Application Configuration
   NODE_ENV: "production"
   LOG_LEVEL: "info"

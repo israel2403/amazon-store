@@ -13,3 +13,14 @@ management:
   endpoints:
     web:
       base-path: /actuator
+
+security:
+  password:
+    # Resolved from Vault-provided environment variable in Kubernetes (e.g. PASSWORD_PEPPER).
+    pepper: ${PASSWORD_PEPPER:}
+    argon2:
+      memory-kb: 65536 # 64 MB
+      iterations: 3
+      parallelism: 1
+      salt-length: 16
+      hash-length: 32
