@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: amazon-api-users-integration
+  config:
+    import: vault://kv/amazon-api/security
+  cloud:
+    vault:
+      enabled: true
+      uri: ${VAULT_ADDR:http://localhost:8200}
+      token: ${VAULT_TOKEN:hvs.qb4jSCwkdHBZwFZw14A7M7qV}
+      kv:
+        enabled: true
+        backend: kv
+    compatibility-verifier:
+      enabled: false
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:amazon_users_test}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    username: ${MYSQL_USER:mysql}
+    password: ${MYSQL_PASSWORD:devpassword123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  flyway:
+    enabled: false
+
+# Vault secret should provide password_pepper
+# If not available, tests will fail with meaningful error
+
+logging:
+  level:
+    root: INFO
+    com.huerta.amazonapi.users: DEBUG
+    org.springframework.vault: DEBUG
