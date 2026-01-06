@@ -24,8 +24,12 @@ public class UserRequest {
     @Size(max = 128)
     private String username;
 
-    @NotBlank
-    @Size(min = 8, max = 255)
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 255, message = "Password must be at least 8 characters")
+    @jakarta.validation.constraints.Pattern(
+        regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
+        message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
+    )
     private String password;
 
     @Size(max = 255)
@@ -40,7 +44,8 @@ public class UserRequest {
     @Size(max = 512)
     private String avatarUrl;
 
-    @Email(message = "Email is required")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
     private String email;
 
     private Set<String> roles;
