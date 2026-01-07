@@ -1,0 +1,20 @@
+[
+  {
+    "testName": "missing @ symbol",
+    "username": "testuser1",
+    "email": "invalidemail.com",
+    "password": "ValidPass123!"
+  },
+  {
+    "testName": "missing domain",
+    "username": "testuser2",
+    "email": "invalid@",
+    "password": "ValidPass123!"
+  },
+  {
+    "testName": "spaces in email",
+    "username": "testuser3",
+    "email": "invalid @example.com",
+    "password": "ValidPass123!"
+  }
+]
