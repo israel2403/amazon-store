@@ -5,7 +5,9 @@ echo "🔨 Deploying Jenkins to Kubernetes..."
 
 # Load environment variables
 if [ -f ../.env ]; then
-    export $(cat ../.env | grep -v '^#' | xargs)
+    set -a
+    source <(cat ../.env | grep -v '^#' | grep -v '^$')
+    set +a
 else
     echo "❌ Error: .env file not found!"
     exit 1
@@ -14,10 +16,12 @@ fi
 # Build Jenkins Docker image and load it into Minikube
 echo "🏗️  Building Jenkins custom image..."
 eval $(minikube docker-env)
-docker build -t jenkins-custom:latest ../jenkins/
+docker build -t jenkins-custom:latest ../../jenkins/
 
 echo "📦 Ensuring amazon-api namespace exists..."
-kubectl apply -f ../base/namespace/
+kubectl apply -f ../base/namespace/namespace.yaml 2>/dev/null || true
+kubectl apply -f ../base/namespace/dev-namespace.yaml 2>/dev/null || true
+kubectl apply -f ../base/namespace/prod-namespace.yaml 2>/dev/null || true
 
 # Create secrets for Jenkins
 echo "🔑 Creating Jenkins secrets..."

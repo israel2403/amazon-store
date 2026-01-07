@@ -5,7 +5,9 @@ echo "🔐 Deploying Vault to Kubernetes..."
 
 # Load environment variables
 if [ -f ../.env ]; then
-    export $(cat ../.env | grep -v '^#' | xargs)
+    set -a
+    source <(cat ../.env | grep -v '^#' | grep -v '^$')
+    set +a
 else
     echo "❌ Error: .env file not found!"
     exit 1
@@ -13,7 +15,9 @@ fi
 
 # Create namespace
 echo "📦 Creating amazon-api namespace..."
-kubectl apply -f ../base/namespace/
+kubectl apply -f ../base/namespace/namespace.yaml
+kubectl apply -f ../base/namespace/dev-namespace.yaml
+kubectl apply -f ../base/namespace/prod-namespace.yaml
 
 # Create secrets for Vault
 echo "🔑 Creating Vault secrets..."
@@ -39,7 +43,8 @@ kubectl create secret generic vault-env-secrets \
     --dry-run=client -o yaml | kubectl apply -f -
 
 # Deploy Vault components
-echo "📝 Creating ConfigMap..."
+echo "📝 Creating ConfigMaps..."
+kubectl apply -f ../infrastructure/vault/vault-config.yaml
 kubectl apply -f ../infrastructure/vault/vault-configmap.yaml
 
 echo "💾 Creating PersistentVolumeClaims..."
