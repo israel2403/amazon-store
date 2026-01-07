@@ -10,7 +10,7 @@ Comprehensive documentation for the `amazon-api-users` microservice.
    - Parameterized unit tests with JUnit 5
    - JSON-based test data management
    - Object recycling and best practices
-   - 20 comprehensive tests for UserService
+   - 18 comprehensive tests for UserService
    - **Coverage:** 100%
 
 2. **[BDD Testing Guide](./BDD_TESTING.md)**
@@ -24,6 +24,12 @@ Comprehensive documentation for the `amazon-api-users` microservice.
    - Vault pepper integration verification
    - 12 integration test scenarios
    - Setup and troubleshooting guide
+
+4. **[Testcontainers Guide](./TESTCONTAINERS.md)** ⭐ NEW
+   - Automatic Docker container management
+   - No manual infrastructure setup required
+   - Works in CI/CD without configuration
+   - Industry best practice (Netflix, Spotify)
 
 ### Quick Start
 
