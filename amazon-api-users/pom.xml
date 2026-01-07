@@ -31,7 +31,7 @@
 		<mysql.version>8.4.0</mysql.version>
 		<spring-cloud.version>2023.0.5</spring-cloud.version>
 		<cucumber.version>7.16.1</cucumber.version>
-		<testcontainers.version>1.19.3</testcontainers.version>
+		<testcontainers.version>1.21.1</testcontainers.version>
 	</properties>
 	<dependencies>
 
@@ -104,12 +104,25 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Testcontainers for integration tests -->
-		<dependency>
+	<!-- Testcontainers for integration tests -->
+	<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-testcontainers</artifactId>
 			<scope>test</scope>
 		</dependency>
+	<!-- Override docker-java for Docker API 1.44+ support -->
+	<dependency>
+		<groupId>com.github.docker-java</groupId>
+		<artifactId>docker-java-api</artifactId>
+		<version>3.5.0</version>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>com.github.docker-java</groupId>
+		<artifactId>docker-java-transport-zerodep</artifactId>
+		<version>3.5.0</version>
+		<scope>test</scope>
+	</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>testcontainers</artifactId>

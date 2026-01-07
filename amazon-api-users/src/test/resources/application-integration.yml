@@ -2,28 +2,15 @@ spring:
   application:
     name: amazon-api-users-integration
   config:
-    import: vault://kv/amazon-api/security
+    import: optional:vault://  # Disable Vault import for Testcontainers tests
   cloud:
     vault:
-      enabled: true
-      # URI and token are dynamically set by TestcontainersConfiguration
-      uri: ${VAULT_ADDR:http://localhost:8200}
-      token: ${VAULT_TOKEN:myroot}
-      kv:
-        enabled: true
-        backend: kv
-      fail-fast: false
-      connection-timeout: 10000
-      read-timeout: 10000
+      enabled: false  # Disabled for Testcontainers - pepper provided directly
     compatibility-verifier:
       enabled: false
   datasource:
-    # Datasource properties are automatically configured by @ServiceConnection
+    # Datasource properties are dynamically configured by @DynamicPropertySource
     # from MySQLContainer in TestcontainersConfiguration
-    url: ${spring.datasource.url:jdbc:mysql://localhost:3306/amazon_users_test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8}
-    username: ${spring.datasource.username:test}
-    password: ${spring.datasource.password:test}
-    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -37,8 +24,8 @@ spring:
   flyway:
     enabled: false
 
-# Vault secret should provide password_pepper
-# If not available, tests will fail with meaningful error
+# Password pepper for integration tests (bypasses Vault)
+password_pepper: testcontainers-pepper-value-for-integration-tests
 
 logging:
   level:

@@ -25,22 +25,28 @@ chmod +x ~/bin/jenkins-cli
 
 ## Quick Start
 
+The CLI automatically authenticates using credentials from Kubernetes!
+
 ```bash
 # List all jobs
 jenkins-cli list-jobs
 
-# Build a job
-jenkins-cli build amazon-api-users-service
+# Or use aliases
+jlist                  # List jobs
+jbuild amazon-api-users  # Build job
+jconsole amazon-api-users  # View console
 
-# Get job status
+# Other commands
 jenkins-cli get-job amazon-api-users-service
-
-# View console output
-jenkins-cli console amazon-api-users-service
-
-# List plugins
-jenkins-cli list-plugins
+jenkins-cli version
 ```
+
+### First Run
+
+On first use, jenkins-cli automatically:
+1. ✅ Fetches credentials from Kubernetes
+2. ✅ Saves them to `~/.jenkins-cli`
+3. ✅ Uses them for all future commands
 
 ---
 

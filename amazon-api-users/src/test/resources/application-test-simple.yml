@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: amazon-api-users-test
+  datasource:
+    # Configured dynamically by @DynamicPropertySource
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  flyway:
+    enabled: false
+  cloud:
+    vault:
+      enabled: false
+    compatibility-verifier:
+      enabled: false
+
+# Test password pepper (bypasses Vault requirement)
+password_pepper: test-pepper-for-integration-tests-only
+
+logging:
+  level:
+    root: INFO
+    com.huerta.amazonapi.users: DEBUG
