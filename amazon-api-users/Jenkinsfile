@@ -54,13 +54,24 @@ pipeline {
             }
             steps {
                 dir(env.SERVICE_DIR) {
-                    sh """
-                        echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
-                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-                        docker logout
-                    """
+                    script {
+                        // Check if using real DockerHub credentials or local dev mode
+                        if (env.DOCKERHUB_TOKEN == 'dummy_token_for_now') {
+                            echo 'Local dev mode: Building image locally (skipping DockerHub push)'
+                            sh """
+                                docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                            """
+                        } else {
+                            echo 'Production mode: Building and pushing to DockerHub'
+                            sh """
+                                echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                                docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                                docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                                docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+                                docker logout
+                            """
+                        }
+                    }
                 }
             }
         }
