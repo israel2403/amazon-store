@@ -47,50 +47,15 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') {
-            when {
-                expression {
-                    return env.GIT_BRANCH ==~ /.*(master|main|develop|dev).*/
-                }
-            }
-            steps {
-                dir(env.SERVICE_DIR) {
-                    sh """
-                        echo ${DOCKERHUB_TOKEN} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
-                        docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
-                        docker logout
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to Development') {
+        stage('Docker Build (Local)') {
             steps {
                 script {
-                    echo 'Deploying to Development environment (amazon-api-dev)...'
-                    sh '''
-                        kubectl apply -k k8s/overlays/dev/
-                        kubectl rollout restart -n amazon-api-dev deployment/notifications-service
-                        kubectl rollout status -n amazon-api-dev deployment/notifications-service --timeout=5m
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    echo 'Deploying to Production environment (amazon-api-prod)...'
-                    sh '''
-                        kubectl apply -k k8s/overlays/prod/
-                        kubectl set image deployment/notifications-service notifications-service=${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -n amazon-api-prod
-                        kubectl rollout status -n amazon-api-prod deployment/notifications-service --timeout=5m
-                    '''
+                    echo '🐳 Building Docker image locally (skipping push for dev)...'
+                    dir(env.SERVICE_DIR) {
+                        sh """
+                            docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
+                        """
+                    }
                 }
             }
         }
