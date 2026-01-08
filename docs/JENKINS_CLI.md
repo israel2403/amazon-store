@@ -367,6 +367,7 @@ jenkins-cli build JOB_NAME         # Trigger build
 jenkins-cli console JOB_NAME       # View output
 jenkins-cli get-job JOB_NAME       # Get config
 jenkins-cli version                # Jenkins version
+jenkins-cli build amazon-api-users/master -s -v   #see logs immediately after triggering a Jenkins build,
 ```
 
 **Jenkins CLI Location:** `~/bin/jenkins-cli`  
